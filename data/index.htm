@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>Главная</title>
+<link rel='stylesheet' href='style.css'>	
+
+<style type="text/css">
+
+h1 {font-size:4em; margin:10px 0;}
+h2 {font-size:3em; margin:0 0; margin-bottom:20px;}
+button {width:100px; height:35px; font-size:20px;}
+.colortextred {color:red;}
+.colortextgray {color:gray;}
+
+</style>
+
+</head>
+<body>
+<div id="container">
+	<div id="part1">
+		<ul id="menu">
+			<li>
+				<div id="hamburger"><span class="hamburger"></span></div>
+				<ul>
+					<li><a href="index.htm">Главная</a></li>
+					<li><a href="setup.htm">Настройка сети</a></li>
+					<li><a href="edit.htm">Файлы</a></li>
+					<li><a href="update.htm">Обновление</a></li>
+				</ul>
+			</li>
+		</ul>
+	</div>
+	<div id="part3"></div>
+	<div id="part2">Главная</div>
+</div>
+
+<div class="content">
+<center>
+	<h1 id='unity' class="colortextgray">0</h1>
+	<h2 id='mv' class="colortextgray">0</h2>
+
+	<p><button onclick="outOFF()">ОТКЛ</button>&nbsp;&nbsp;
+	<button class="colortextred" onclick="outON()">ВКЛ</button></p>
+</center>
+</div>
+
+<div class="content">
+<center>
+	<p><button onclick="change(-1)">-1</button>&nbsp;&nbsp;
+	<button onclick="change(1)">+1</button></p>
+
+	<p><button onclick="change(-5)">-5</button>&nbsp;&nbsp;
+	<button onclick="change(5)">+5</button></p>
+
+	<p><button onclick="change(-10)">-10</button>&nbsp;&nbsp;
+	<button onclick="change(10)">+10</button></p>
+
+	<p><button onclick="change(-20)">-20</button>&nbsp;&nbsp;
+	<button onclick="change(20)">+20</button></p>
+</center>
+</div>
+
+<div class="content">
+<p>Напряжение на выходе устройства изменяется в условных еденицах от 0 до 200.
+<p>Что соответствует диапазону напряжений от 0 до 160 мВ.</p>
+<p>Шаг изменения, приблизительно 0,8 мВ.</p>
+</div>
+	
+
+
+<script>
+let dataSend = {
+	page: "index",
+	unity: 70,
+	outState: 0
+};
+let data = dataSend;
+
+let outState = 0;
+
+function change(n) {
+	if (dataSend["unity"] + n > 200)   dataSend["unity"] = 200;
+	else if (dataSend["unity"] + n < 0)   dataSend["unity"] = 0;
+	else   dataSend["unity"] += n;
+
+	updateAllPage();
+	if (dataSend["outState"] == 1)	 startSendData("JSON");
+};
+
+
+function outOFF(){
+	dataSend["outState"] = 0;
+	startSendData("JSON");
+};
+
+
+function outON(){
+	dataSend["outState"] = 1;
+	startSendData("JSON");
+};
+
+
+function updateAllPage() {
+	document.getElementById("unity").innerHTML = dataSend["unity"];
+	document.getElementById("mv").innerHTML = (3.3/4096*dataSend["unity"]*1000).toFixed(1) + "  mV";
+	if (dataSend["outState"]==1){
+		document.getElementById("unity").className = "colortextred";
+		document.getElementById("mv").className = "colortextred";
+	}else{
+		document.getElementById("unity").className = "colortextgray";
+		document.getElementById("mv").className = "colortextgray";
+	}
+};
+
+
+
+</script>
+<script src="connect.js" type="text/javascript"></script>
+</body>
+</html>

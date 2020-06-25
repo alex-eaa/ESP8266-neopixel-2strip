@@ -1,0 +1,178 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>Настройка сети</title>
+<link rel='stylesheet' href='style.css'>
+<script src="mqttws31.min.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="container">
+	<div id="part1">
+		<ul id="menu">
+			<li>
+				<div id="hamburger"><span class="hamburger"></span></div>
+				<ul>
+					<li><a href="index.htm">Главная</a></li>
+					<li><a href="setup.htm">Настройка сети</a></li>
+					<li><a href="edit.htm">Файлы</a></li>
+					<li><a href="update.htm">Обновление</a></li>
+				</ul>
+			</li>
+		</ul>
+	</div>
+	<div id="part3"></div>
+	<div id="part2">Сетевые настройки</div>
+</div>
+
+<div class='content'>
+	<h3>Настройка WiFi</h3>
+	<h4><input type='radio' id='wifiAP_mode_off' name='wifiAP_mode' onchange='updateDisabledElements()'/> Режим клиента</h4>
+
+	<p>Имя сети: <input type='text' id='p_ssid' maxlength='32' value=''/></p>
+	<p>Пароль сети: <input type='text' id='p_password' maxlength='64' value=''/></p>
+	
+	<p><input type='checkbox' id='static_IP' onchange='updateDisabledElements()'>Статический IP-адрес:</p>
+
+	<p>IP-адрес: <input type='text' id='ip_0' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='ip_1' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='ip_2' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='ip_3' class='staticIP' size='3' maxlength='3' value=''/>
+	</p>
+
+	<p>Маска подсети: <input type='text' id='sbnt_0' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='sbnt_1' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='sbnt_2' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='sbnt_3' class='staticIP' size='3' maxlength='3' value=''/>
+	</p>
+
+	<p>Основной шлюз: <input type='text' id='gtw_0' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='gtw_1' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='gtw_2' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='gtw_3' class='staticIP' size='3' maxlength='3' value=''/>
+	</p>
+</div>
+
+<div class="content">
+	<h4><input type='radio' id='wifiAP_mode_on' name='wifiAP_mode' onchange='updateDisabledElements()'/> Режим точки доступа</h4>
+
+	<p>Имя сети: <input type='text' id='p_ssidAP' maxlength='32' value=''/></p>
+	<p>Пароль сети: <input type='text' id='p_passwordAP' maxlength='64' value=''/></p>
+</div>
+
+<div class="content">
+	<p><button onclick="butSendData()">Сохранить</button></p>
+	<p><button onclick="butSendReset()">Перезагрузить</button></p>
+</div>
+
+<script>
+let data = {
+	page: "setup",
+	ip: new Array(),
+	sbnt: new Array(),
+	gtw: new Array(),
+	p_ssid: "",
+	p_password: "",
+	p_ssidAP: "",
+	p_passwordAP: "",
+	wifiAP_mode: 0,
+	static_IP: false,
+};
+let dataSend = data;
+
+
+function updateDataForSend() {
+	data["static_IP"] = document.getElementById("static_IP").checked;
+	data["ip"][0] = (document.getElementById('ip_0').value);
+	data["ip"][1] = (document.getElementById('ip_1').value);
+	data["ip"][2] = (document.getElementById('ip_2').value);
+	data["ip"][3] = (document.getElementById('ip_3').value);
+	data["sbnt"][0] = (document.getElementById('sbnt_0').value);
+	data["sbnt"][1] = (document.getElementById('sbnt_1').value);
+	data["sbnt"][2] = (document.getElementById('sbnt_2').value);
+	data["sbnt"][3] = (document.getElementById('sbnt_3').value);
+	data["gtw"][0] = (document.getElementById('gtw_0').value);
+	data["gtw"][1] = (document.getElementById('gtw_1').value);
+	data["gtw"][2] = (document.getElementById('gtw_2').value);
+	data["gtw"][3] = (document.getElementById('gtw_3').value);
+	data["p_ssid"] = document.getElementById("p_ssid").value;
+	data["p_password"] = document.getElementById("p_password").value;
+	data["p_ssidAP"] = document.getElementById("p_ssidAP").value;
+	data["p_passwordAP"] = document.getElementById("p_passwordAP").value;
+	if (document.getElementById('wifiAP_mode_on').checked == true)   data["wifiAP_mode"] = true;
+	else  data["wifiAP_mode"] = false;
+};
+
+
+function updateAllPage() {
+	document.getElementById('static_IP').checked = data["static_IP"];
+	document.getElementById('ip_0').value = data["ip"][0];
+	document.getElementById('ip_1').value = data["ip"][1]; 
+	document.getElementById('ip_2').value = data["ip"][2]; 
+	document.getElementById('ip_3').value = data["ip"][3];
+	document.getElementById('sbnt_0').value = data["sbnt"][0];
+	document.getElementById('sbnt_1').value = data["sbnt"][1];
+	document.getElementById('sbnt_2').value = data["sbnt"][2];
+	document.getElementById('sbnt_3').value = data["sbnt"][3];
+	document.getElementById('gtw_0').value = data["gtw"][0];
+	document.getElementById('gtw_1').value = data["gtw"][1]; 
+	document.getElementById('gtw_2').value = data["gtw"][2]; 
+	document.getElementById('gtw_3').value = data["gtw"][3];
+	if (data["wifiAP_mode"]==true) {
+		document.getElementById('wifiAP_mode_on').checked = true;
+		document.getElementById('wifiAP_mode_off').checked = false;
+	} else {
+		document.getElementById('wifiAP_mode_on').checked = false;
+		document.getElementById('wifiAP_mode_off').checked = true;	
+	}
+	document.getElementById('p_ssid').value = data["p_ssid"];
+	document.getElementById('p_password').value = data["p_password"];
+	document.getElementById('p_ssidAP').value = data["p_ssidAP"];
+	document.getElementById('p_passwordAP').value = data["p_passwordAP"];
+	updateDisabledElements();
+};
+
+
+
+function butSendData () {
+	updateDataForSend();
+	startSendData("JSON");
+};
+
+function butSendReset () {
+	if (confirm("Вы хотите перезагрузить устройство?")) {
+		startSendData("RESET");
+	}
+};
+
+
+
+function updateDisabledElements() {
+	var elements = document.getElementsByClassName("staticIP");
+	for (let n=0; n<elements.length; n++){
+		if (document.getElementById("static_IP").checked){
+			elements[n].removeAttribute("disabled");
+		}else{
+			elements[n].setAttribute("disabled", "true");
+		}
+	}
+	if (document.getElementById('wifiAP_mode_on').checked){
+		document.getElementById('p_ssid').setAttribute("disabled", "true");
+		document.getElementById('p_password').setAttribute("disabled", "true");
+		document.getElementById('p_ssidAP').removeAttribute("disabled");
+		document.getElementById('p_passwordAP').removeAttribute("disabled");
+	}else{
+		document.getElementById('p_ssid').removeAttribute("disabled");
+		document.getElementById('p_password').removeAttribute("disabled");
+		document.getElementById('p_ssidAP').setAttribute("disabled", "true");
+		document.getElementById('p_passwordAP').setAttribute("disabled", "true");
+	}
+}
+
+
+
+</script>
+<script src="connect.js" type="text/javascript"></script>
+</body>
+</html>
