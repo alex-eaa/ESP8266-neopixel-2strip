@@ -1,5 +1,6 @@
 //Print configuration parameters
-void printConfiguration () {
+void printConfiguration() 
+{
   Serial.println(F("\nPrint ALL VARIABLE:"));
   Serial.print(F("wifiAP_mode="));  Serial.println(wifiAP_mode);
   Serial.print(F("p_ssidAP="));     Serial.println(p_ssidAP);
@@ -14,7 +15,8 @@ void printConfiguration () {
 
 
 
-void printChipInfo() {
+void printChipInfo() 
+{
   Serial.print(F("\n<-> LAST RESET REASON: "));  Serial.println(ESP.getResetReason());
   Serial.print(F("<-> ESP8266 CHIP ID: "));      Serial.println(String(ESP.getChipId(), HEX));
   Serial.print(F("<-> CORE VERSION: "));         Serial.println(ESP.getCoreVersion());
@@ -31,3 +33,42 @@ void printChipInfo() {
   Serial.println("");
 }
 
+
+
+//Monitoring Status WiFi module to serial
+void WifiStatus(void)
+{
+  if (WiFi.status() == WL_CONNECTED) 
+  {
+    Serial.print(F(": WiFi.status = WL_CONNECTED. ")); //3
+    Serial.print(F("IP address: "));  Serial.println(WiFi.localIP());
+  }
+  else if (WiFi.status() == WL_NO_SHIELD) 
+  {
+    Serial.println(F(": WiFi.status = WL_NO_SHIELD ")); //255
+  }
+  else if (WiFi.status() == WL_IDLE_STATUS) 
+  {
+    Serial.println(F(": WiFi.status = WL_IDLE_STATUS ")); //0
+  }
+  else if (WiFi.status() == WL_NO_SSID_AVAIL) 
+  {
+    Serial.println(F(": WiFi.status = WL_NO_SSID_AVAIL ")); //1
+  }
+  else if (WiFi.status() == WL_SCAN_COMPLETED) 
+  {
+    Serial.println(F(": WiFi.status = WL_SCAN_COMPLETED ")); //2
+  }
+  else if (WiFi.status() == WL_CONNECT_FAILED) 
+  {
+    Serial.println(F(": WiFi.status = WL_CONNECT_FAILED ")); //4
+  }
+  else if (WiFi.status() == WL_CONNECTION_LOST) 
+  {
+    Serial.println(F(": WiFi.status = WL_CONNECTION_LOST ")); //5
+  }
+  else if (WiFi.status() == WL_DISCONNECTED) 
+  {
+    Serial.println(F(": WiFi.status = WL_DISCONNECTED ")); //6
+  }
+}

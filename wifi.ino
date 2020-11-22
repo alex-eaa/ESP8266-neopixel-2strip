@@ -2,15 +2,31 @@
 //////  WI-FI  WI-FI  WI-FI  //////////////////////////////
 ///////////////////////////////////////////////////////////
 
+#define BLINK_TIME_LED_WIFI_1 250             //частота моргания LED_WIFI при поиске точки доступа, мс
+#define BLINK_TIME_LED_WIFI_2 1000            //частота моргания LED_WIFI при работе в режиме точки доступа, мс
+
+//Сохраняемые переменные (настройки сети)
+bool wifiAP_mode = 0;                   //флаг работы WIFI модуля в режиме точки доступа, (1-работает в режиме AP)
+bool static_IP = 0;                     //флаг работы со стачискими настройками сети
+byte ip[4] = {192, 168, 1, 43};
+byte sbnt[4] = {255, 255, 255, 0};
+byte gtw[4] = {192, 168, 1, 1};
+char *p_ssid = new char[0];
+char *p_password = new char[0];
+char *p_ssidAP = new char[0];
+char *p_passwordAP = new char[0];
+
 unsigned int wifiConnectTimer = millis();     //перемнная для таймера включения WIFI
 unsigned int ledBlinkTimer = millis();        //перемнная для мигания LED WIFI
-bool wlConnectedMsgSend = 0;                  //флаг вывода сообщения о подключении к WIFI
-bool wifiAP_runned = 0;                       //флаг запуска АР
+bool wlConnectedMsgSend = 0;                  //флаг - подключения к WIFI, запуска MDNS и включения LED_WIFI
+bool wifiAP_runned = 0;                       //флаг - запущен режим точки доступа АР
 
-void wifi_init()
+
+void wifi_update()
 {
-  //Разовое сообщение при подключении к точке доступа WIFI
-  if (WiFi.status() == WL_CONNECTED && wlConnectedMsgSend == 0) {
+  //При подключении к точке доступа WIFI, запуск MDNS и включение LED_WIFI
+  if (WiFi.status() == WL_CONNECTED && wlConnectedMsgSend == 0) 
+  {
 #ifdef DEBUG
     Serial.println(F("\nCONNECTED to WiFi AP!"));
     Serial.print(F("My IP address: "));   Serial.println(WiFi.localIP());
@@ -22,21 +38,26 @@ void wifi_init()
     Serial.print(F("Connected to AP with password: "));   Serial.println(WiFi.psk());
 #endif
     startMDNS();
-    wlConnectedMsgSend = 1;
     digitalWrite(GPIO_LED_WIFI, 0);
+    wlConnectedMsgSend = 1;
   }
 
-  if (wifiAP_mode == 0 && wifiAP_runned == 0) {
+  if (wifiAP_mode == 0 && wifiAP_runned == 0)
+  {
     //Мигание LED WIFI при поиске точки доступа
-    if (WiFi.status() != WL_CONNECTED && millis() - ledBlinkTimer > 250) {
+    if (WiFi.status() != WL_CONNECTED && millis() - ledBlinkTimer > BLINK_TIME_LED_WIFI_1) 
+    {
       digitalWrite(GPIO_LED_WIFI, !digitalRead(GPIO_LED_WIFI));
       ledBlinkTimer = millis();
       wlConnectedMsgSend = 0;
     }
-  } else if (wifiAP_runned == 1) {
-    //Мигание LED WIFI при работе точки доступа
-    if (wifiAP_runned == 1) {
-      if (millis() - ledBlinkTimer > 750) {
+  } 
+  else if (wifiAP_runned == 1) 
+  {
+    if (wifiAP_runned == 1)   //Мигание LED WIFI при работе точки доступа
+    {
+      if (millis() - ledBlinkTimer > BLINK_TIME_LED_WIFI_2) 
+      {
         digitalWrite(GPIO_LED_WIFI, !digitalRead(GPIO_LED_WIFI));
         ledBlinkTimer = millis();
       }
@@ -54,7 +75,7 @@ void startAp(char *ap_ssid, const char *ap_password)
   if (WiFi.getPersistent() == true)    WiFi.persistent(false);   //disable saving wifi config into SDK flash area
   WiFi.disconnect();
   WiFi.softAP(ap_ssid, ap_password);
-  WiFi.persistent(true);                                      //enable saving wifi config into SDK flash area
+  WiFi.persistent(true);                                         //enable saving wifi config into SDK flash area
   wifiAP_runned = 1;
   startMDNS();
 #ifdef DEBUG
@@ -64,7 +85,6 @@ void startAp(char *ap_ssid, const char *ap_password)
   Serial.print(F("Soft-AP IP: "));            Serial.println(WiFi.softAPIP());
   Serial.print(F("Soft-AP MAC: "));           Serial.println(WiFi.softAPmacAddress());
 #endif
-
 }
 
 
@@ -100,37 +120,5 @@ void startMDNS() {
 #endif
     MDNS.addService("http", "tcp", 80);
     //MDNS.addService("ws", "tcp", 81);
-  }
-}
-
-
-
-//Monitoring Status WiFi module to serial
-void WifiStatus(void)
-{
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.print(F(": WiFi.status = WL_CONNECTED. ")); //3
-    Serial.print(F("IP address: "));  Serial.println(WiFi.localIP());
-  }
-  else if (WiFi.status() == WL_NO_SHIELD) {
-    Serial.println(F(": WiFi.status = WL_NO_SHIELD ")); //255
-  }
-  else if (WiFi.status() == WL_IDLE_STATUS) {
-    Serial.println(F(": WiFi.status = WL_IDLE_STATUS ")); //0
-  }
-  else if (WiFi.status() == WL_NO_SSID_AVAIL) {
-    Serial.println(F(": WiFi.status = WL_NO_SSID_AVAIL ")); //1
-  }
-  else if (WiFi.status() == WL_SCAN_COMPLETED) {
-    Serial.println(F(": WiFi.status = WL_SCAN_COMPLETED ")); //2
-  }
-  else if (WiFi.status() == WL_CONNECT_FAILED) {
-    Serial.println(F(": WiFi.status = WL_CONNECT_FAILED ")); //4
-  }
-  else if (WiFi.status() == WL_CONNECTION_LOST) {
-    Serial.println(F(": WiFi.status = WL_CONNECTION_LOST ")); //5
-  }
-  else if (WiFi.status() == WL_DISCONNECTED) {
-    Serial.println(F(": WiFi.status = WL_DISCONNECTED ")); //6
   }
 }

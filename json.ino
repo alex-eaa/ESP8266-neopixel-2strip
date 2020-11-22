@@ -2,8 +2,17 @@
 String serializationToJson_index()
 {
   DynamicJsonDocument doc(1024);
-  //doc["unity"] = unity;
-  //doc["outState"] = outState;
+    doc["ledBridhtness"] = ledBridhtness;
+    doc["minBridhtness"] = minBridhtness;
+    doc["maxBridhtness"] = maxBridhtness;
+    doc["varForArrConstLedTemp"] = varForArrConstLedTemp;
+    JsonArray arrConstLedTemp0 = doc.createNestedArray("arrConstLedTemp0");
+    for (int n = 0; n < 3; n++)  arrConstLedTemp0.add(arrConstLedTemp[0][n]);
+    JsonArray arrConstLedTemp1 = doc.createNestedArray("arrConstLedTemp1");
+    for (int n = 0; n < 3; n++)  arrConstLedTemp1.add(arrConstLedTemp[1][n]);
+    JsonArray arrConstLedTemp2 = doc.createNestedArray("arrConstLedTemp2");
+    for (int n = 0; n < 3; n++)  arrConstLedTemp2.add(arrConstLedTemp[2][n]);
+  
   String output = "";
   serializeJson(doc, output);
   return output;

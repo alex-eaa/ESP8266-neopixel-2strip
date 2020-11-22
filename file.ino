@@ -21,7 +21,16 @@ bool saveFile(char *filename)
     for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
   }
   else if (filename == FILE_CONF) {
-    //relay.serialize(&doc, SERIALYZE_FOR_FILE);
+    doc["ledBridhtness"] = ledBridhtness;
+    doc["minBridhtness"] = minBridhtness;
+    doc["maxBridhtness"] = maxBridhtness;
+    doc["varForArrConstLedTemp"] = varForArrConstLedTemp;
+    JsonArray arrConstLedTemp0 = doc.createNestedArray("arrConstLedTemp0");
+    for (int n = 0; n < 3; n++)  arrConstLedTemp0.add(arrConstLedTemp[0][n]);
+    JsonArray arrConstLedTemp1 = doc.createNestedArray("arrConstLedTemp1");
+    for (int n = 0; n < 3; n++)  arrConstLedTemp1.add(arrConstLedTemp[1][n]);
+    JsonArray arrConstLedTemp2 = doc.createNestedArray("arrConstLedTemp2");
+    for (int n = 0; n < 3; n++)  arrConstLedTemp2.add(arrConstLedTemp[2][n]);
   }
 
   File file = SPIFFS.open(filename, "w");
@@ -91,29 +100,25 @@ bool loadFile(char *filename) {
     p_passwordAP = new char [stemp.length() + 1];
     stemp.toCharArray(p_passwordAP, stemp.length() + 1);
 
-    //Serial.print(F("p_ssid="));         Serial.println(p_ssid);
-    //Serial.print(F("p_password="));     Serial.println(p_password);
-    //Serial.print(F("p_ssidAP="));       Serial.println(p_ssidAP);
-    //Serial.print(F("p_passwordAP="));   Serial.println(p_passwordAP);
-
     wifiAP_mode = doc["wifiAP_mode"];    //Serial.println(wifiAP_mode);
-
-    static_IP = doc["static_IP"];     //Serial.println(static_IP);
-    ip[0] = doc["ip"][0];             //Serial.println(ip[0]);
-    ip[1] = doc["ip"][1];             //Serial.println(ip[1]);
-    ip[2] = doc["ip"][2];             //Serial.println(ip[2]);
-    ip[3] = doc["ip"][3];             //Serial.println(ip[3]);
-    sbnt[0] = doc["sbnt"][0];         //Serial.println(sbnt[0]);
-    sbnt[1] = doc["sbnt"][1];         //Serial.println(sbnt[1]);
-    sbnt[2] = doc["sbnt"][2];         //Serial.println(sbnt[2]);
-    gtw[0] = doc["gtw"][0];           //Serial.println(gtw[0]);
-    sbnt[3] = doc["sbnt"][3];         //Serial.println(sbnt[3]);
-    gtw[1] = doc["gtw"][1];           //Serial.println(gtw[1]);
-    gtw[2] = doc["gtw"][2];           //Serial.println(gtw[2]);
-    gtw[3] = doc["gtw"][3];           //Serial.println(gtw[3]);
+    static_IP = doc["static_IP"];        //Serial.println(static_IP);
+    for (int n = 0; n < 4; n++){
+      ip[n] = doc["ip"][n];              //Serial.println(ip[n]);
+      sbnt[n] = doc["sbnt"][n];          //Serial.println(sbnt[n]);
+      gtw[n] = doc["gtw"][n];            //Serial.println(gtw[n]);
+    }
   }
+  
   else if (filename == FILE_CONF) {
-
+    ledBridhtness = doc["ledBridhtness"];     //Serial.println(ledBridhtness);
+    minBridhtness = doc["minBridhtness"];     //Serial.println(minBridhtness);
+    maxBridhtness = doc["maxBridhtness"];     //Serial.println(maxBridhtness);
+    varForArrConstLedTemp = doc["varForArrConstLedTemp"];   //Serial.println(varForArrConstLedTemp);
+    for (int n = 0; n < 3; n++){
+      arrConstLedTemp[0][n] = doc["arrConstLedTemp0"][n];   //Serial.println(arrConstLedTemp[0][n]);
+      arrConstLedTemp[1][n] = doc["arrConstLedTemp1"][n];   //Serial.println(arrConstLedTemp[1][n]);
+      arrConstLedTemp[2][n] = doc["arrConstLedTemp2"][n];   //Serial.println(arrConstLedTemp[2][n]);
+    }
   }
 
   file.close();

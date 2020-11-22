@@ -28,8 +28,11 @@
    - SDA – GPIO4 (D2)
    - VCC – 3.3v
    - GND – Gnd
-      Подключение светодиодной ленты:
-   -
+
+      Подключение пинов управления светодиодных лент:
+   - GPIO16 (D0)
+   - GPIO14 (D5)
+
       Подключение других элементов (для платы типа nodeMCU ESP-12e):
    - GPIO2  (D4) - встроенный голубой wifi светодиод;
    - GPIO12 (D6) - кнопка запуска с настройками сети по умолчанию;
@@ -37,6 +40,7 @@
 
 #define DEBUG 1
 
+#include <NeoPixelBus.h>
 #include <Wire.h>
 #include <iarduino_APDS9930.h>
 #include <FS.h>
@@ -51,10 +55,11 @@
 #define SCL 5               //SCL – GPIO5 (D1)
 #define SDA 4               //SDA – GPIO4 (D2)
 #define GPIO_LED_WIFI 2     // номер пина светодиода GPIO2 (D4)
-#define GPIO_BUTTON 12       // номер пина кнопки GPIO12 (D6) 
-#define GPIO_WS2812 16       // номер пина управляющий диодами WS2812
+#define GPIO_BUTTON 12      // номер пина кнопки GPIO12 (D6) 
+#define GPIO_WS2812B_1 14   // номер пина управляющий диодами WS2812B лента 1 (D5)
+#define GPIO_WS2812B_2 16   // номер пина управляющий диодами WS2812B лента 2 (D0)
 
-#define FILE_CONF    "/conf.txt"     //Имя файла для сохранения настроек
+#define FILE_CONF    "/conf.txt"      //Имя файла для сохранения настроек
 #define FILE_NETWORK "/net.txt"       //Имя файла для сохранения настроек сети
 
 #define DEVICE_TYPE "esplink_pixel_"
@@ -64,68 +69,74 @@
 #define DEFAULT_AP_PASS "11111111"      //пароль для точки доступа "По умолчанию"
 
 //Сохраняемые переменные (настройки сети)
-bool wifiAP_mode = 0;
-bool static_IP = 0;
-byte ip[4] = {192, 168, 1, 43};
-byte sbnt[4] = {255, 255, 255, 0};
-byte gtw[4] = {192, 168, 1, 1};
-char *p_ssid = new char[0];
-char *p_password = new char[0];
-char *p_ssidAP = new char[0];
-char *p_passwordAP = new char[0];
+extern bool wifiAP_mode;                   //флаг работы WIFI модуля в режиме точки доступа, (1-работает в режиме AP)
+extern bool static_IP;                     //флаг работы со стачискими настройками сети
+extern byte ip[4];
+extern byte sbnt[4];
+extern byte gtw[4];
+extern char *p_ssid;
+extern char *p_password;
+extern char *p_ssidAP;
+extern char *p_passwordAP;
 
 bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
-unsigned int speedT = 200;  //минимальный период отправки данных, миллисек
+unsigned int speedT = 200;   //минимальный период отправки данных, миллисек
 bool flagDataUpdate = 0;     //флаг обновленых данных (если 1 значит нужно отправить данные WS клиенту)
 
 //Сохраняемые переменные (настройки параметров светильника)
-int ledBridhtness = 0;                   //яркость led
-int ledTemp = 0;                         //температура свечения led
-int arrConstLedTemp[] = {20, 50, 70};    //предустановленные значения температуры света
+float ledBridhtness = 0.5f;               //яркость led
+float minBridhtness = 0.1f;               //минимальная яркость (0-255)
+float maxBridhtness = 1.0f;               //максимальная яркость (0-255)
+int varForArrConstLedTemp = 0;            //предустановленный цвет, индекс элемента массива arrConstLedTemp
+int arrConstLedTemp[3][3] = { {255,255,255},
+                              {255,204,204},
+                              {100,204,204} };     //предустановленные значения температуры света
 
-int proximity = 0;                       //расстояние от датчика до объекта (0-1024)
 
+int proximity = 0;                        //расстояние от датчика до объекта (0-1024)
 bool flagLedState = 0;                    //флаг состояния освещения, вкл./откл.
 bool flagToOnOff = 0;                     //флаг перехода в режим изменения состояния освещения на противоположное
 bool flagToBrightnessChange = 0;          //флаг перехода в режим настройки яркости
 bool flagToTempChange = 0;                //флаг перехода в режим настройки температуры света
-bool flagDirectionBrightnessChange = 1;   //направление изменения яркости (увеличение/уменьшение) по кругу
+bool flagDirectionBrightnessChange = 1;   //направление изменения яркости (1-увеличение / 0-уменьшение) по кругу
+bool flagNeedSaveConf = 0;                //флаг необходимости сохранения настроек света
 
-unsigned int timeToOnOff = 100;           //Время задержки для жеста включения-отключения света, мс
+unsigned int timeToOnOff = 60;            //Время задержки для жеста включения-отключения света, мс
 unsigned int timeToBrightness = 1000;     //Время задержки для жеста перехода в режим регулировки яркости, мс
-unsigned int timeToTemp = 800;            //Время задержки для жеста изменения температуры света, мс
-unsigned int speedBrightnessChange = 50;  //начальная скорость изменения яркости, мс
+unsigned int timeToTemp = 1000;           //Время до повторного включения, для изменения температуры света, мс
+unsigned int timeSaveConf = 5000;         //Время до сохранения настроек после изменения яркости или температуры света
 
-int upLimitForBrightnessChange = 1024;    //верхний предел proximity для изменения скорости регулировки яркости
-int downLimitForBrightnessChange = 256;   //нижний предел proximity для изменения скорости регулировки яркости
-int divider = 16;                         /*делитель пределов proximity для изменения скорости регулировки яркости,
-                                           влияет на скорость изменения яркости. upLimitForBrightnessChange/divider
-                                           1-самый меделнный, чем больше тем быстрее */
-int varForLimits = 0;                     /*вспом.константа для изменения направления скорости регулировки яркости
-                                           рука вверх быстрее, вниз медленнее, равна
-                                           (upLimitForBrightnessChange + downLimitForBrightnessChange) / divider  */
+bool prevFlagLedState;                    //Вспомогательная переменная
+int prevLedBridhtness;                    //Вспомогательная переменная
+int prevVarForArrConstLedTemp;            //Вспомогательная переменная
+unsigned int prevTime = 0;                //Вспомогательная переменная для времени жестов
+unsigned int prevTimeToTemp = 0;          //Вспомогательная переменная для времени жеста изменеия температуры света
+unsigned int prevTimeSaveConf = 0;        //Вспомогательная переменная для времени сохранения настроек
 
-int varDownForLimits = 0;                     //вспом.константа для нижнего предела proximity, равна downLimitForBrightnessChange/divider
-unsigned int prevSpeedBrightnessChange = 0;   //Вспомогательная для скорости изменения яркости, мс
-unsigned int prevTime = 0;                    //Вспомогательная переменная для времени жестов
-unsigned int prevTimeToTemp = 0;              //Вспомогательная переменная для времени жеста изменеия температуры света
-int varForArrConstLedTemp = 0;                //вспм.перменная, индекс элемента массива arrConstLedTemp
+//NeoPixel
+const uint16_t PixelCount = 30;           // this example assumes 4 pixels, making it smaller will cause a failure
+const uint8_t PixelPin = GPIO_WS2812B_1;  // make sure to set this to the correct pin, ignored for Esp8266
 
-
+unsigned int timeDebug = 500;           //Вспомогательная переменная для времени жестов
+unsigned int prevTimeDebug = 0;           //Вспомогательная переменная для времени жестов
 
 //Создаем необходимые объекты
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
-WiFiClient espClient;
-WiFiUDP ntpUDP;
 iarduino_APDS9930 apds;         /*Определяем объект apds для работы с датчиком APDS-9930.
                                 Если у датчика не стандартный адрес, то его нужно указать: iarduino_APDS9930 apds(0xFF);  */
+NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> strip(PixelCount, PixelPin);
 
+RgbColor white(255, 204, 204);
+RgbColor black(0);
 
 void setup() {
+  
   Serial.begin(115200);
   Serial.println();
+  strip.Begin();
+  strip.Show();
   pinMode(GPIO_BUTTON, INPUT_PULLUP);
   pinMode(GPIO_LED_WIFI, OUTPUT);
   digitalWrite(GPIO_LED_WIFI, HIGH);
@@ -136,10 +147,13 @@ void setup() {
   printChipInfo();
   scanAllFile();
   printFile(FILE_NETWORK);
+  printFile(FILE_CONF);
 #endif
 
+  loadFile(FILE_CONF);
 
-  //Запуск точки доступа с параметрами поумолчанию
+
+  //Запуск точки доступа с параметрами поумолчанию если файл настроек сети отсутствует или зажата кнопка
   if ( !loadFile(FILE_NETWORK) ||  digitalRead(GPIO_BUTTON) == 0)    startAp(DEFAULT_AP_NAME, DEFAULT_AP_PASS);
   //Запуск точки доступа
   else if (digitalRead(GPIO_BUTTON) == 1 && wifiAP_mode == 1)    startAp(p_ssidAP, p_passwordAP);
@@ -168,24 +182,25 @@ void setup() {
 
   webServer_init();      //инициализация HTTP сервера
   webSocket_init();      //инициализация webSocket сервера
-
-  varForLimits = (upLimitForBrightnessChange + downLimitForBrightnessChange) / divider;
-  varDownForLimits = downLimitForBrightnessChange / divider;
+  
+  white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
+                   arrConstLedTemp[varForArrConstLedTemp][1],
+                   arrConstLedTemp[varForArrConstLedTemp][2]);
 }
 
 
 
 void loop() {
-  wifi_init();
+  wifi_update();
   webSocket.loop();
   server.handleClient();
   MDNS.update();
 
-
   proximity = apds.getProximity();   //считать показания расстояния из датчика
 
   //Если к датчику поднесли руку
-  if (proximity > 0) {
+  if (proximity > 0)
+  {
     //Установка флага изменения состояния освещения на противоположное. Если рука находится возле датчика более 100 мс и флаги сброшены.
     if (millis() - prevTime > timeToOnOff && flagToOnOff == 0 && flagToBrightnessChange == 0) {
       flagToOnOff = 1;
@@ -195,57 +210,89 @@ void loop() {
       flagToOnOff = 0;
       flagToBrightnessChange = 1;
     }
-    //Вызов функции изменения яркости освещения, если флаг яркости установлен и рука возле датчика, с периодичностью speedBrightnessChange
+    //Вызов функции изменения яркости освещения, если флаг яркости установлен и рука возле датчика
     if (flagToBrightnessChange == 1) {
-      if (millis() - prevSpeedBrightnessChange > speedBrightnessChange)    changeLedBridhtness();
+      changeLedBridhtness();
     }
     //Изменение предустановленных значений температуры света при быстром повторном включении света и взведеном флаге разрешения
     if (flagToTempChange == 1 && millis() - prevTimeToTemp < timeToTemp) {
-      if (varForArrConstLedTemp > 2)   varForArrConstLedTemp = 0;
-      ledTemp = arrConstLedTemp[varForArrConstLedTemp];
       varForArrConstLedTemp ++;
+      if (varForArrConstLedTemp > 2)   varForArrConstLedTemp = 0;
+      white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
+                       arrConstLedTemp[varForArrConstLedTemp][1],
+                       arrConstLedTemp[varForArrConstLedTemp][2]);
       flagToTempChange = 0;
+      flagNeedSaveConf = 1;
+      prevTimeSaveConf = millis();
     }
-
-    //Если руку отвели от датчика
-  } else {
+  }
+  //Если руку отвели от датчика
+  else
+  {
     //Вкл.-откл. света при отводе руки от датчика, при установленном флаге изменения света,
     //при отключении также взводим флаг разрешения изменения температуры света
-    if (flagToOnOff == 1 && flagToBrightnessChange == 0) {
+    if (flagToOnOff == 1 && flagToBrightnessChange == 0) 
+    {
       flagLedState = !flagLedState;
-      if (flagLedState == 0) {
+      if (flagLedState == 0) 
+      {
         flagToTempChange = 1;
         prevTimeToTemp = millis();
       }
       flagToOnOff = 0;
     }
-    //Отключение режима настройки яркости при отводе руки от датчика и изменение направления изменения яркости
-    if (flagToOnOff == 0 && flagToBrightnessChange == 1) {
+    //Отключение режима настройки яркости при отводе руки от датчика и изменение направления изменения яркости на противоположное
+    if (flagToOnOff == 0 && flagToBrightnessChange == 1)
+    {
       flagToBrightnessChange = 0;
       flagDirectionBrightnessChange = !flagDirectionBrightnessChange;
+      flagNeedSaveConf = 1;
+      prevTimeSaveConf = millis();                             
     }
+    
     prevTime = millis();
   }
 
 
-  //Включение отключение света
-  //if (flagLedState == 1)   digitalWrite(GPIO_LED_WIFI, LOW);
-  //else  digitalWrite(GPIO_LED_WIFI, HIGH);
+  //Включение ленты на исходный цвет и яркость
+  if (flagLedState == 1 && prevFlagLedState != flagLedState)
+  {
+    prevFlagLedState = flagLedState;
+    onStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
+  }
+  //Отключение ленты
+  else if (flagLedState == 0 && prevFlagLedState != flagLedState)
+  {
+    prevFlagLedState = flagLedState;
+    offStrip(black);
+  }
+
+  //Сохранение настроек в файл если установлен флаг и прошло время паузы
+  if (flagNeedSaveConf == 1  && flagToBrightnessChange == 0 && millis()-prevTimeSaveConf > timeSaveConf){
+    saveFile(FILE_CONF);
+    flagNeedSaveConf = 0;
+  }
 
 
-  Serial.print((String) "proximity=" + proximity + ", ");
+#ifdef DEBUG
+  if(millis() - prevTimeDebug > timeDebug){ 
+  //Serial.print((String) "proximity=" + proximity + ", ");
   Serial.print((String) "ON=" + flagLedState + ", ");
   Serial.print((String) "B=" + ledBridhtness + ", ");
-  Serial.print((String) "T=" + ledTemp + "\n");
-
-  delay(50);
-
+  Serial.print((String) "T=" + varForArrConstLedTemp + "\n");
+  Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
+  //Serial.print((String) "CalculateBrightness=" + white.CalculateBrightness() + "\n");
+  prevTimeDebug = millis();
+  }
+#endif
 
 
 
   //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены
-  if (flagDataUpdate == 1) {
-    if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] ) {
+  if (flagDataUpdate == 1)
+  {
+    if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] )
+    {
       String data = serializationToJson_index();
       int startT_broadcastTXT = micros();
 #ifdef DEBUG
@@ -263,22 +310,51 @@ void loop() {
 
 
 
-void changeLedBridhtness() {
-  int var;
-  if (flagDirectionBrightnessChange == 1)   var = ledBridhtness + 1;
-  else   var = ledBridhtness - 1;
-
-  if (var > 100)       ledBridhtness = 0;
-  else if (var < 0)    ledBridhtness = 100;
-  else                 ledBridhtness = var;
-
-  //Регулируем скорость изменения яркости взависисмости от расстояния между рукой и датчиком, равна
-  //(upLimitForBrightnessChange + downLimitForBrightnessChange)/divider - proximity / divider
-  speedBrightnessChange = varForLimits - proximity / divider;
-  if (proximity < downLimitForBrightnessChange) {
-    speedBrightnessChange = varForLimits - downLimitForBrightnessChange / divider / 8;
+void onStrip(RgbColor color)
+{
+  for (int n = 0; n < PixelCount; n++)
+  {
+    strip.SetPixelColor(n, color);
+    strip.Show();
+    delay(15);
   }
-
-  prevSpeedBrightnessChange = millis();
 }
 
+
+void offStrip(RgbColor color)
+{
+  for (int n = PixelCount; n >= 0; n--)
+  {
+    strip.SetPixelColor(n, color);
+    strip.Show();
+    delay(15);
+  }
+}
+
+
+void updateStrip(RgbColor color)
+{
+  for (int n = 0; n < PixelCount; n++)   strip.SetPixelColor(n, color);
+  strip.Show();
+}
+
+
+
+//Плавное изменение яркости по кругу
+void changeLedBridhtness()
+{
+  if (ledBridhtness == minBridhtness)       flagDirectionBrightnessChange = 1;
+  else if (ledBridhtness == maxBridhtness)  flagDirectionBrightnessChange = 0;  
+  
+  if (flagDirectionBrightnessChange == 1)
+  {
+    ledBridhtness = ledBridhtness + 0.01;
+    if (ledBridhtness > maxBridhtness)      ledBridhtness = maxBridhtness;
+  }
+  else {
+    ledBridhtness = ledBridhtness - 0.01;
+    if (ledBridhtness < minBridhtness)      ledBridhtness = minBridhtness;
+  }
+  
+  updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
+}
