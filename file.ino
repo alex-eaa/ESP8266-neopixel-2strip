@@ -25,6 +25,8 @@ bool saveFile(char *filename)
     doc["minBridhtness"] = minBridhtness;
     doc["maxBridhtness"] = maxBridhtness;
     doc["varForArrConstLedTemp"] = varForArrConstLedTemp;
+    doc["nAnimeOn"] = nAnimeOn;
+    doc["nAnimeOff"] = nAnimeOff;
     JsonArray arrConstLedTemp0 = doc.createNestedArray("arrConstLedTemp0");
     for (int n = 0; n < 3; n++)  arrConstLedTemp0.add(arrConstLedTemp[0][n]);
     JsonArray arrConstLedTemp1 = doc.createNestedArray("arrConstLedTemp1");
@@ -110,10 +112,12 @@ bool loadFile(char *filename) {
   }
   
   else if (filename == FILE_CONF) {
-    ledBridhtness = doc["ledBridhtness"];     //Serial.println(ledBridhtness);
-    minBridhtness = doc["minBridhtness"];     //Serial.println(minBridhtness);
-    maxBridhtness = doc["maxBridhtness"];     //Serial.println(maxBridhtness);
+    ledBridhtness = doc["ledBridhtness"];                   //Serial.println(ledBridhtness);
+    minBridhtness = doc["minBridhtness"];                   //Serial.println(minBridhtness);
+    maxBridhtness = doc["maxBridhtness"];                   //Serial.println(maxBridhtness);
     varForArrConstLedTemp = doc["varForArrConstLedTemp"];   //Serial.println(varForArrConstLedTemp);
+    nAnimeOn = doc["nAnimeOn"];                             //Serial.println(nAnimeOn);
+    nAnimeOff = doc["nAnimeOff"];                           //Serial.println(nAnimeOff);
     for (int n = 0; n < 3; n++){
       arrConstLedTemp[0][n] = doc["arrConstLedTemp0"][n];   //Serial.println(arrConstLedTemp[0][n]);
       arrConstLedTemp[1][n] = doc["arrConstLedTemp1"][n];   //Serial.println(arrConstLedTemp[1][n]);

@@ -30,7 +30,7 @@
    - GND – Gnd
 
       Подключение пинов управления светодиодных лент:
-   - GPIO16 (D0)
+   - GPIO13 (D7)
    - GPIO14 (D5)
 
       Подключение других элементов (для платы типа nodeMCU ESP-12e):
@@ -57,7 +57,7 @@
 #define GPIO_LED_WIFI 2     // номер пина светодиода GPIO2 (D4)
 #define GPIO_BUTTON 12      // номер пина кнопки GPIO12 (D6) 
 #define GPIO_WS2812B_1 14   // номер пина управляющий диодами WS2812B лента 1 (D5)
-#define GPIO_WS2812B_2 16   // номер пина управляющий диодами WS2812B лента 2 (D0)
+#define GPIO_WS2812B_2 13   // номер пина управляющий диодами WS2812B лента 2 (D7)
 
 #define FILE_CONF    "/conf.txt"      //Имя файла для сохранения настроек
 #define FILE_NETWORK "/net.txt"       //Имя файла для сохранения настроек сети
@@ -67,6 +67,8 @@
 
 #define DEFAULT_AP_NAME "ESP"           //имя точки доступа "По умолчанию"
 #define DEFAULT_AP_PASS "11111111"      //пароль для точки доступа "По умолчанию"
+
+#define PIXEL_COUNT 30                  //количество пикселей в лентах
 
 //Сохраняемые переменные (настройки сети)
 extern bool wifiAP_mode;                   //флаг работы WIFI модуля в режиме точки доступа, (1-работает в режиме AP)
@@ -85,13 +87,15 @@ unsigned int speedT = 200;   //минимальный период отправ�
 bool flagDataUpdate = 0;     //флаг обновленых данных (если 1 значит нужно отправить данные WS клиенту)
 
 //Сохраняемые переменные (настройки параметров светильника)
-float ledBridhtness = 0.5f;               //яркость led
+float ledBridhtness = 0.3f;               //яркость led
 float minBridhtness = 0.1f;               //минимальная яркость (0-255)
-float maxBridhtness = 1.0f;               //максимальная яркость (0-255)
+float maxBridhtness = 0.9f;               //максимальная яркость (0-255)
 int varForArrConstLedTemp = 0;            //предустановленный цвет, индекс элемента массива arrConstLedTemp
-int arrConstLedTemp[3][3] = { {255,255,255},
-                              {255,204,204},
-                              {100,204,204} };     //предустановленные значения температуры света
+int nAnimeOn = 6;                         //номер анимации включения
+int nAnimeOff = 6;                        //номер анимации отключения
+int arrConstLedTemp[3][3] = { {000,255,255},
+                              {255,000,204},
+                              {200,204,000} };     //предустановленные значения температуры света
 
 
 int proximity = 0;                        //расстояние от датчика до объекта (0-1024)
@@ -114,19 +118,18 @@ unsigned int prevTime = 0;                //Вспомогательная пе�
 unsigned int prevTimeToTemp = 0;          //Вспомогательная переменная для времени жеста изменеия температуры света
 unsigned int prevTimeSaveConf = 0;        //Вспомогательная переменная для времени сохранения настроек
 
-//NeoPixel
-const uint16_t PixelCount = 30;           // this example assumes 4 pixels, making it smaller will cause a failure
-const uint8_t PixelPin = GPIO_WS2812B_1;  // make sure to set this to the correct pin, ignored for Esp8266
-
-unsigned int timeDebug = 500;           //Вспомогательная переменная для времени жестов
-unsigned int prevTimeDebug = 0;           //Вспомогательная переменная для времени жестов
+unsigned int timeDebug = 500;             //Вспомогательная переменная для отладки
+unsigned int prevTimeDebug = 0;           //Вспомогательная переменная для отладки
+unsigned int timeDebug2 = 10000;             //Вспомогательная переменная для отладки
+unsigned int prevTimeDebug2 = 0;           //Вспомогательная переменная для отладки
 
 //Создаем необходимые объекты
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
 iarduino_APDS9930 apds;         /*Определяем объект apds для работы с датчиком APDS-9930.
                                 Если у датчика не стандартный адрес, то его нужно указать: iarduino_APDS9930 apds(0xFF);  */
-NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> strip(PixelCount, PixelPin);
+NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> strip1(PIXEL_COUNT, GPIO_WS2812B_1);
+NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> strip2(PIXEL_COUNT, GPIO_WS2812B_2);
 
 RgbColor white(255, 204, 204);
 RgbColor black(0);
@@ -135,11 +138,13 @@ void setup() {
   
   Serial.begin(115200);
   Serial.println();
-  strip.Begin();
-  strip.Show();
   pinMode(GPIO_BUTTON, INPUT_PULLUP);
   pinMode(GPIO_LED_WIFI, OUTPUT);
   digitalWrite(GPIO_LED_WIFI, HIGH);
+  strip1.Begin();
+  strip1.Show();
+  strip2.Begin();
+  strip2.Show();
 
   SPIFFS.begin();
 
@@ -150,7 +155,7 @@ void setup() {
   printFile(FILE_CONF);
 #endif
 
-  loadFile(FILE_CONF);
+  //loadFile(FILE_CONF);
 
 
   //Запуск точки доступа с параметрами поумолчанию если файл настроек сети отсутствует или зажата кнопка
@@ -258,13 +263,13 @@ void loop() {
   if (flagLedState == 1 && prevFlagLedState != flagLedState)
   {
     prevFlagLedState = flagLedState;
-    onStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
+    onStrip(RgbColor::LinearBlend(black, white, ledBridhtness), nAnimeOn);
   }
   //Отключение ленты
   else if (flagLedState == 0 && prevFlagLedState != flagLedState)
   {
     prevFlagLedState = flagLedState;
-    offStrip(black);
+    onStrip(black, nAnimeOff);
   }
 
   //Сохранение настроек в файл если установлен флаг и прошло время паузы
@@ -275,14 +280,28 @@ void loop() {
 
 
 #ifdef DEBUG
-  if(millis() - prevTimeDebug > timeDebug){ 
+  if(millis() - prevTimeDebug > timeDebug)
+  { 
   //Serial.print((String) "proximity=" + proximity + ", ");
-  Serial.print((String) "ON=" + flagLedState + ", ");
-  Serial.print((String) "B=" + ledBridhtness + ", ");
-  Serial.print((String) "T=" + varForArrConstLedTemp + "\n");
-  Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
+  //Serial.print((String) "ON=" + flagLedState + ", ");
+  //Serial.print((String) "B=" + ledBridhtness + ", ");
+  //Serial.print((String) "T=" + varForArrConstLedTemp + "\n");
+  
+  //Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
+  
   //Serial.print((String) "CalculateBrightness=" + white.CalculateBrightness() + "\n");
   prevTimeDebug = millis();
+  }
+
+  if(millis() - prevTimeDebug2 > timeDebug2)
+  {
+    nAnimeOn ++;
+    nAnimeOff ++;
+    if (nAnimeOn == 7)   nAnimeOn = 0;
+    if (nAnimeOff == 7)  nAnimeOff = 0;
+    Serial.print((String) "nAnimeOn=" + nAnimeOn + ", ");
+    Serial.print((String) "nAnimeOff=" + nAnimeOff + "\n");
+    prevTimeDebug2 = millis(); 
   }
 #endif
 
@@ -310,23 +329,146 @@ void loop() {
 
 
 
-void onStrip(RgbColor color)
+void onStrip(RgbColor color, int nAnime)
 {
-  for (int n = 0; n < PixelCount; n++)
+  unsigned int startTime = 0;
+  switch (nAnime)
   {
-    strip.SetPixelColor(n, color);
-    strip.Show();
-    delay(15);
+  //простое включение (всех светодиодов одновременно)
+  case 0:
+    startTime = millis();                                   
+    for (int n = 0; n < PIXEL_COUNT; n++)
+    {
+      strip1.SetPixelColor(n, color);
+      strip2.SetPixelColor(n, color);
+    }
+    strip1.Show();    
+    strip2.Show();
+    Serial.println(millis() - startTime);
+    break;
+  //плавное зажигание (всех светодиодов одновременно)
+  case 1:
+  startTime = millis();             
+    if (color.CalculateBrightness() != 0)
+    {
+      for (float n = 0.00; n <= ledBridhtness; n = n + 0.01)
+      {
+        updateStrip(RgbColor::LinearBlend(black, white, n));
+        delay(20);
+      }      
+    }
+    else
+    {
+      for (float n = ledBridhtness; n >= 0.00; n = n - 0.01)
+      {
+        updateStrip(RgbColor::LinearBlend(black, white, n));
+        delay(20);
+      }       
+    }
+    Serial.println(millis() - startTime);
+    break;
+  //последовательное включение от начала к концу лент (2 ленты одновременно) (начала лент в углу)
+  case 2:
+  startTime = millis();                                    
+    for (int n = 0; n < PIXEL_COUNT; n++)
+    {
+      strip1.SetPixelColor(n, color);
+      strip1.Show();
+      strip2.SetPixelColor(n, color);
+      strip2.Show();
+      delay(15);
+    }
+    Serial.println(millis() - startTime);
+    break; 
+  //последовательное включение от конца к началу лент (2 ленты одновременно) (начала лент в углу)
+  case 3:
+  startTime = millis();                                    
+    for (int n = PIXEL_COUNT-1; n >= 0; n--)
+    {
+      strip1.SetPixelColor(n, color);
+      strip1.Show();
+      strip2.SetPixelColor(n, color);
+      strip2.Show();
+      delay(15);
+    }
+    Serial.println(millis() - startTime);
+    break;
+  //последовательное включение от конца к началу ленты 1 дальше от начала к концу ленты 2 (2 ленты последовательно)
+  case 4:
+  startTime = millis();                                     
+    for (int n = PIXEL_COUNT-1; n >= 0; n--)
+    {
+      strip1.SetPixelColor(n, color);
+      strip1.Show();
+      delay(10);
+    }  
+    for (int n = 0; n < PIXEL_COUNT; n++)
+    {
+      strip2.SetPixelColor(n, color);
+      strip2.Show();
+      delay(10);
+    }
+    Serial.println(millis() - startTime);
+    break;
+  //последовательное включение от конца к началу ленты 2 дальше от начала к концу ленты 1 (2 ленты последовательно)
+  case 5:
+    startTime = millis();                                     
+    for (int n = PIXEL_COUNT-1; n >= 0; n--)
+    {
+      strip2.SetPixelColor(n, color);
+      strip2.Show();
+      delay(10);
+    }  
+    for (int n = 0; n < PIXEL_COUNT; n++)
+    {
+      strip1.SetPixelColor(n, color);
+      strip1.Show();
+      delay(10);
+    }
+    Serial.println(millis() - startTime); 
+    break;
+  //рандомное включение по одному светодиоду (2 ленты одновременно)
+  case 6:
+    startTime = millis();
+    int rndArr[60];
+    for (int i = 0; i < 60; i++)  rndArr[i] = i;
+    
+    for (int i = 0; i < 60; i++)
+    {
+      int j = random(0, 59);
+      int temp = rndArr[j];
+      rndArr[j] = rndArr[i];
+      rndArr[i] = temp;
+    }
+
+    for (int n = 0; n < 2*PIXEL_COUNT; n++)
+    {
+      if (rndArr[n] < 30)
+      {
+      strip1.SetPixelColor(rndArr[n], color);
+      strip1.Show();        
+      }
+      else
+      {
+      strip2.SetPixelColor(rndArr[n]-30, color);
+      strip2.Show();         
+      }
+      delay(10);
+    }  
+    Serial.println(millis() - startTime);
+    break;
   }
 }
 
 
 void offStrip(RgbColor color)
 {
-  for (int n = PixelCount; n >= 0; n--)
+  for (int n = PIXEL_COUNT-1; n >= 0; n--)
   {
-    strip.SetPixelColor(n, color);
-    strip.Show();
+    strip1.SetPixelColor(n, color);
+    strip1.Show();
+    strip2.SetPixelColor(n, color);
+    strip2.Show();
     delay(15);
   }
 }
@@ -334,8 +476,13 @@ void offStrip(RgbColor color)
 
 void updateStrip(RgbColor color)
 {
-  for (int n = 0; n < PixelCount; n++)   strip.SetPixelColor(n, color);
-  strip.Show();
+  for (int n = 0; n < PIXEL_COUNT; n++)
+  {
+    strip1.SetPixelColor(n, color);
+    strip2.SetPixelColor(n, color);
+  }
+  strip1.Show();
+  strip2.Show();
 }
 
 
