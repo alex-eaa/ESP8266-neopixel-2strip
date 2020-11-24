@@ -4,78 +4,280 @@
 <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0'>
 <title>Главная</title>
-<link rel='stylesheet' href='style.css'>	
 
 <style type="text/css">
 
-h1 {font-size:4em; margin:10px 0;}
-h2 {font-size:3em; margin:0 0; margin-bottom:20px;}
-button {width:100px; height:35px; font-size:20px;}
-.colortextred {color:red;}
-.colortextgray {color:gray;}
+body{
+max-width:640px;
+margin:auto;
+padding: 10px 6px;
+font-size:16px;
+font-family:arial;
+}
+
+
+.bar1, .bar2, .bar3 {
+  width: 28px;
+  height: 4px;
+  background-color: white;
+  margin: 4px 0;
+  transition: 0.4s;
+}
+.change .bar1 {
+  -webkit-transform: rotate(-45deg) translate(-7px,6px);
+  transform: rotate(-45deg) translate(-7px,6px);
+}
+.change .bar2 {opacity: 0;}
+.change .bar3 {
+  -webkit-transform: rotate(45deg) translate(-6px,-5px);
+  transform: rotate(45deg) translate(-6px,-5px);
+}
+
+
+.topnav {
+  overflow:hidden;
+  background-color:black;
+  position:relative;
+  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.2);
+}
+.topnav #myLinks {
+  display:none;
+}
+.topnav a, .topnav #headnav {
+  color: white;
+  padding: 11px 16px;
+  text-decoration: none;
+  font-size: 18px;
+  display: block;
+}
+.topnav a.icon{
+  padding: 8px 8px;
+  background: black;
+  display: block;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+.active {
+  background-color:#0f6389;
+  color: white;
+}
+
+
+.card {
+  margin-top: 6px;
+  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+  width: 100%;
+}
+.container {
+  padding: 2px 16px 16px 16px;
+}
+
+
+table td {text-align: center;}
+table .tdleft {text-align: left;}
+table .tdright {text-align: right;}
+table, select, input[type=range] {width: 100%;}
+select, input[type=number] { font-size: 16px;}
+
+.buttonContr button {font-size: 16px; width: 75px;}
+.buttonContr .center {width: 140px;}
+
+.brightness #range {margin-bottom: 0;}
+.brightness {margin:auto;}
+
+}
+
 
 </style>
 
+<script>
+
+function myFunction(x) {
+  x.classList.toggle("change");
+
+   var x = document.getElementById("myLinks");
+  if (x.style.display === "block") {
+    x.style.display = "none";
+  } else {
+    x.style.display = "block";
+  }
+}
+
+</script>
+
 </head>
 <body>
-<div id="container">
-	<div id="part1">
-		<ul id="menu">
-			<li>
-				<div id="hamburger"><span class="hamburger"></span></div>
-				<ul>
-					<li><a href="index.htm">Главная</a></li>
-					<li><a href="setup.htm">Настройка сети</a></li>
-					<li><a href="edit.htm">Файлы</a></li>
-					<li><a href="update.htm">Обновление</a></li>
-				</ul>
-			</li>
-		</ul>
+
+
+<!-- Верхнее меню навигации -->
+<div class="topnav">
+  <!--<a href="index.htm" class="active">Главная</a> -->
+  <div id="headnav" class="active">Главная</div>
+  <div id="myLinks">
+    <a href="index.htm">Главная</a>
+    <a href="setup.htm">Настройка сети</a>
+    <a href="edit.htm">Файлы</a>
+    <a href="update.htm">Обновление</a>
+  </div>
+  <a class="icon">
+	<div class="containerMenu" onclick="myFunction(this)">
+	  <div class="bar1"></div>
+	  <div class="bar2"></div>
+	  <div class="bar3"></div>
 	</div>
-	<div id="part3"></div>
-	<div id="part2">Главная</div>
+  </a>
 </div>
 
-<div class="content">
-<center>
-	<h1 id='unity' class="colortextgray">0</h1>
-	<h2 id='mv' class="colortextgray">0</h2>
 
-	<p><button onclick="outOFF()">ОТКЛ</button>&nbsp;&nbsp;
-	<button class="colortextred" onclick="outON()">ВКЛ</button></p>
-</center>
+<div class="card">
+  <div class="container buttonContr">
+  	<center><h4>Управление светильником</h4></center>
+	<table>
+		<tr> 
+			<td class="tdleft">
+				<button class="left">Левый</button>
+			</td>
+			<td>
+				<button class="center">Светильник</button>
+			</td>
+			<td class="tdright">
+				<button class="right">Правый</button>
+			</td>
+		</tr>
+	</table>
+  </div>
 </div>
 
-<div class="content">
-<center>
-	<p><button onclick="change(-1)">-1</button>&nbsp;&nbsp;
-	<button onclick="change(1)">+1</button></p>
-
-	<p><button onclick="change(-5)">-5</button>&nbsp;&nbsp;
-	<button onclick="change(5)">+5</button></p>
-
-	<p><button onclick="change(-10)">-10</button>&nbsp;&nbsp;
-	<button onclick="change(10)">+10</button></p>
-
-	<p><button onclick="change(-20)">-20</button>&nbsp;&nbsp;
-	<button onclick="change(20)">+20</button></p>
-</center>
+<div class="card">
+  <div class="container brightness">
+  	<center><h4>Управление яркостью</h4>
+	<table>
+		<tr> 
+			<td class="tdleft">
+				<input type="number" max="100" min="1" value="1">
+			</td>
+			<td>
+				<input type="number" max="100" min="1" value="1">
+			</td>
+			<td class="tdright">
+				<input type="number" max="100" min="1" value="50">
+			</td>
+		</tr>
+	</table>
+	<p id="range"><input type="range" min="0" max="100" list="rangeList"></p>
+	<datalist id="rangeList">
+		<option value="0" label="0">
+		<option value="10" label="10">
+		<option value="20" label="20">
+		<option value="30" label="30">
+		<option value="40" label="40">
+		<option value="50" label="50">
+		<option value="60" label="60">
+		<option value="70" label="70">
+		<option value="80" label="80">
+		<option value="90" label="90">
+		<option value="100" label="100">
+	</datalist>
+	<center>
+  </div>
 </div>
 
-<div class="content">
-<p>Напряжение на выходе устройства изменяется в условных еденицах от 0 до 200.
-<p>Что соответствует диапазону напряжений от 0 до 160 мВ.</p>
-<p>Шаг изменения, приблизительно 0,8 мВ.</p>
+<div class="card">
+  <div class="container">
+  	<center><h4>Предустановленные цвета</h4>
+  	<table><tr> 
+		<td class="tdleft">
+			<input type="color" list="colorList">
+			<datalist id="colorList">
+				<option value="#ffffff" label="Белый">
+				<option value="#ff0000" label="Красный">
+				<option value="#008000" label="Зелёный">
+				<option value="#0000ff" label="Синий">
+				<option value="#ffa500" label="Оранжевый">
+				<option value="#FFD700" label="Золотой">
+				<option value="#ffff00" label="Желтый">
+				<option value="#ffffe0" label="Светло-желтый">
+			</datalist>
+		</td>
+		<td>
+			<input type="color" list="colorList">
+			<datalist id="colorList">
+				<option value="#ffffff" label="Белый">
+				<option value="#ff0000" label="Красный">
+				<option value="#008000" label="Зелёный">
+				<option value="#0000ff" label="Синий">
+				<option value="#ffa500" label="Оранжевый">
+				<option value="#FFD700" label="Золотой">
+				<option value="#ffff00" label="Желтый">
+				<option value="#ffffe0" label="Светло-желтый">
+			</datalist>				
+		</td>
+		<td class="tdright">
+			<input type="color" list="colorList">
+			<datalist id="colorList">
+				<option value="#ffffff" label="Белый">
+				<option value="#ff0000" label="Красный">
+				<option value="#008000" label="Зелёный">
+				<option value="#0000ff" label="Синий">
+				<option value="#ffa500" label="Оранжевый">
+				<option value="#FFD700" label="Золотой">
+				<option value="#ffff00" label="Желтый">
+				<option value="#ffffe0" label="Светло-желтый">
+			</datalist>				
+		</td>
+	</tr></table>
+  </center>
+  </div>
+</div>
+
+<div class="card">
+  <div class="container">
+  	<center><h4>Эффект анимации</h4></center>
+  	<h5>Включения:</h5>
+	  <select name="nAnimeOn" id="nAnimeOn">
+	    <option value="0">Анимация 11</option>
+	    <option value="1">Анимация 12</option>
+	    <option value="2">Анимация 13 d sdsds sd ds sd</option>
+	    <option value="3">Анимация 14</option>
+	    <option value="4">Анимация 15</option>
+	    <option value="5">Анимация 16</option>
+	    <option value="6">Анимация 17</option>
+	    <option value="7">Анимация 18</option>
+	    <option value="8">Анимация 19</option>
+	    <option value="9">Анимация 20</option>
+	  </select>
+	 <br><br>
+	<h5>Отключения:</h5>
+	  <select class="anime" name="nAnimeOff" id="nAnimeOff">
+	    <option value="0">Анимация 1</option>
+	    <option value="1">Анимация 1</option>
+	    <option value="2">Анимация 1</option>
+	    <option value="3">Анимация 1</option>
+	    <option value="4">Анимация 1</option>
+	    <option value="5">Анимация 1</option>
+	    <option value="6">Анимация 1</option>
+	    <option value="7">Анимация 1</option>
+	    <option value="8">Анимация 1</option>
+	    <option value="9">Анимация 1</option>
+	  </select>
+  </div>
 </div>
 	
-
 
 <script>
 let dataSend = {
 	page: "index",
-	unity: 70,
-	outState: 0
+	ledBridhtness: 0,
+	minBridhtness: 0,
+	maxBridhtness: 0,
+	varForArrConstLedTemp: 0,
+	nAnimeOn: 0,
+	nAnimeOff: 0,
+	arrConstLedTemp: new Array()
 };
+
 let data = dataSend;
 
 let outState = 0;
