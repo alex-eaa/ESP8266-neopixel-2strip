@@ -1,7 +1,5 @@
-var deviceIp="";
-var wsState = 0;
 
-
+//Работа с webSocket сервером
 function wsConnect(wsIP) {
 	let wsAdress = 'ws://'+wsIP+':81/'+data['page']+'.htm';
 	console.log("wsAdress=", wsAdress);
@@ -9,31 +7,22 @@ function wsConnect(wsIP) {
 	
 	ws.onopen = function(e) {
   		console.log("WS onConnected");
-  		wsState = 1;
-  		changeIndicTypeConnect();
+  		flagWsState = 1;
   	};
 
 	ws.onclose = function(e) {
 		console.log('WS is closed.', e.reason);
-		wsState = 0;
+		flagWsState = 0;
 	};
 
 	ws.onerror = function (error) {
-		wsState = 0;
+		flagWsState = 0;
 	};
 
 	ws.onmessage = function (e) {
 		console.log('WS FROM Server: ', e.data);
 		receivedDataProcessing (e.data);
 	};
-}
-
-
-
-function startConControl(){
-	console.log('deviceIp=', deviceIp);
-	if (deviceIp!="")   wsConnect(deviceIp);
-	changeIndicTypeConnect();
 }
 
 
@@ -49,10 +38,9 @@ function startSendData(command) {
 	}
 
 	function sendFinishData(dat){
-		if (wsState==1){
+		if (flagWsState==1){
 			console.log('WS TO Server: ', dat);
 			ws.send(dat);
-			unsetIndicConnect();
 		}
 	};
 
@@ -64,47 +52,34 @@ function startSendData(command) {
 function receivedDataProcessing(strJson){
 	try {
 		let obj=JSON.parse(strJson);
-		for (x in obj) {
-			if (data[x]!=null) {
+		//перебираем все элементы в obj, ищем элементы с именами переменных в
+		//структурах data и dataSend и сохраняем их содержимое
+		for (x in obj){
+			if (data[x]!=null){
 				data[x]=obj[x];
-			} else if (dataSend[x]!=null) {
+			} 
+			else if (dataSend[x]!=null){
 				dataSend[x]=obj[x];
 			}
 		}
-
 		updateAllPage();
-		setIndicConnect();
-	} catch (e) {
+	} catch (e){
 		console.log(e.message); 
 	}
+	console.log(dataSend);
+	console.log(data); 
 }
 
 
+//Старт скрипта
+var deviceIp="192.168.1.235";
+var flagWsState = 0;   //оостояние соединения с webSocket сервером
 
-
-function changeIndicTypeConnect(){
-	if (wsState==1) document.getElementById("part3").innerHTML = "n";
-	else document.getElementById("part3").innerHTML = "-";
-};
-function setIndicConnect(){
-	document.getElementById("part3").classList.add("part3A");
-
-};
-function unsetIndicConnect(){
-	document.getElementById("part3").classList.remove("part3A");
-};
-
-
-
-
-
-function setDeviceIp(setIp){
-	deviceIp = setIp;
+//Определение IP-адреса контроллера с которого загружена страница
+if (location.host){
+	deviceIp = location.host;
 	console.log('deviceIp=', deviceIp);
 }
 
-if (location.host) {
-	setDeviceIp(location.host);
-	startConControl();
-}
-
+//соединение с webSocket сервером на контроллере
+if (deviceIp!="")   wsConnect(deviceIp);

@@ -156,17 +156,19 @@ function myFunction(x) {
 	<table>
 		<tr> 
 			<td class="tdleft">
-				<input type="number" max="100" min="1" value="1">
+				<input type="number" id="minBridhtness" max="100" min="1" onblur="changeMinBridhtnessValue(this.value)">
 			</td>
 			<td>
-				<input type="number" max="100" min="1" value="1">
+				<input type="number" id="ledBridhtness" max="100" min="1" step="1" readonly >
 			</td>
 			<td class="tdright">
-				<input type="number" max="100" min="1" value="50">
+				<input type="number" id="maxBridhtness" max="100" min="1" onblur="changeMaxBridhtnessValue(this.value)">
 			</td>
 		</tr>
 	</table>
-	<p id="range"><input type="range" min="0" max="100" list="rangeList"></p>
+	<p id="range">
+		<input type="range" id="rangeLedBridhtness" min="0" max="100" list="rangeList" oninput="changeRangeValue(this.value)">
+	</p>
 	<datalist id="rangeList">
 		<option value="0" label="0">
 		<option value="10" label="10">
@@ -189,46 +191,26 @@ function myFunction(x) {
   	<center><h4>Предустановленные цвета</h4>
   	<table><tr> 
 		<td class="tdleft">
-			<input type="color" list="colorList">
-			<datalist id="colorList">
-				<option value="#ffffff" label="Белый">
-				<option value="#ff0000" label="Красный">
-				<option value="#008000" label="Зелёный">
-				<option value="#0000ff" label="Синий">
-				<option value="#ffa500" label="Оранжевый">
-				<option value="#FFD700" label="Золотой">
-				<option value="#ffff00" label="Желтый">
-				<option value="#ffffe0" label="Светло-желтый">
-			</datalist>
+			<input type="color" id="arrConstLedTemp0" list="colorList">
 		</td>
 		<td>
-			<input type="color" list="colorList">
-			<datalist id="colorList">
-				<option value="#ffffff" label="Белый">
-				<option value="#ff0000" label="Красный">
-				<option value="#008000" label="Зелёный">
-				<option value="#0000ff" label="Синий">
-				<option value="#ffa500" label="Оранжевый">
-				<option value="#FFD700" label="Золотой">
-				<option value="#ffff00" label="Желтый">
-				<option value="#ffffe0" label="Светло-желтый">
-			</datalist>				
+			<input type="color" id="arrConstLedTemp1" list="colorList">
 		</td>
 		<td class="tdright">
-			<input type="color" list="colorList">
-			<datalist id="colorList">
-				<option value="#ffffff" label="Белый">
-				<option value="#ff0000" label="Красный">
-				<option value="#008000" label="Зелёный">
-				<option value="#0000ff" label="Синий">
-				<option value="#ffa500" label="Оранжевый">
-				<option value="#FFD700" label="Золотой">
-				<option value="#ffff00" label="Желтый">
-				<option value="#ffffe0" label="Светло-желтый">
-			</datalist>				
+			<input type="color" id="arrConstLedTemp2" list="colorList">
 		</td>
 	</tr></table>
   </center>
+	<datalist id="colorList">
+		<option value="#ffffff" label="Белый">
+		<option value="#ff0000" label="Красный">
+		<option value="#008000" label="Зелёный">
+		<option value="#0000ff" label="Синий">
+		<option value="#ffa500" label="Оранжевый">
+		<option value="#FFD700" label="Золотой">
+		<option value="#ffff00" label="Желтый">
+		<option value="#ffffe0" label="Светло-желтый">
+	</datalist>
   </div>
 </div>
 
@@ -236,38 +218,32 @@ function myFunction(x) {
   <div class="container">
   	<center><h4>Эффект анимации</h4></center>
   	<h5>Включения:</h5>
-	  <select name="nAnimeOn" id="nAnimeOn">
+	  <select class="anime" name="nAnimeOn" id="nAnimeOn">
 	    <option value="0">Анимация 11</option>
 	    <option value="1">Анимация 12</option>
-	    <option value="2">Анимация 13 d sdsds sd ds sd</option>
+	    <option value="2">Анимация 13</option>
 	    <option value="3">Анимация 14</option>
 	    <option value="4">Анимация 15</option>
 	    <option value="5">Анимация 16</option>
 	    <option value="6">Анимация 17</option>
-	    <option value="7">Анимация 18</option>
-	    <option value="8">Анимация 19</option>
-	    <option value="9">Анимация 20</option>
 	  </select>
 	 <br><br>
 	<h5>Отключения:</h5>
 	  <select class="anime" name="nAnimeOff" id="nAnimeOff">
-	    <option value="0">Анимация 1</option>
-	    <option value="1">Анимация 1</option>
-	    <option value="2">Анимация 1</option>
-	    <option value="3">Анимация 1</option>
-	    <option value="4">Анимация 1</option>
-	    <option value="5">Анимация 1</option>
-	    <option value="6">Анимация 1</option>
-	    <option value="7">Анимация 1</option>
-	    <option value="8">Анимация 1</option>
-	    <option value="9">Анимация 1</option>
+	    <option value="0">Анимация 11</option>
+	    <option value="1">Анимация 12</option>
+	    <option value="2">Анимация 13</option>
+	    <option value="3">Анимация 14</option>
+	    <option value="4">Анимация 15</option>
+	    <option value="5">Анимация 16</option>
+	    <option value="6">Анимация 17</option>
 	  </select>
   </div>
 </div>
 	
 
 <script>
-let dataSend = {
+let dataSend = {      //структура с передаваемыми и принимаемыми переменными ws серверу
 	page: "index",
 	ledBridhtness: 0,
 	minBridhtness: 0,
@@ -275,11 +251,12 @@ let dataSend = {
 	varForArrConstLedTemp: 0,
 	nAnimeOn: 0,
 	nAnimeOff: 0,
-	arrConstLedTemp: new Array()
+	arrConstLedTemp0: new Array(),
+	arrConstLedTemp1: new Array(),
+	arrConstLedTemp2: new Array()
 };
 
-let data = dataSend;
-
+let data = dataSend;	//структура с только принимаемыми переменными с ws серверу
 let outState = 0;
 
 function change(n) {
@@ -304,18 +281,51 @@ function outON(){
 };
 
 
-function updateAllPage() {
-	document.getElementById("unity").innerHTML = dataSend["unity"];
-	document.getElementById("mv").innerHTML = (3.3/4096*dataSend["unity"]*1000).toFixed(1) + "  mV";
-	if (dataSend["outState"]==1){
-		document.getElementById("unity").className = "colortextred";
-		document.getElementById("mv").className = "colortextred";
-	}else{
-		document.getElementById("unity").className = "colortextgray";
-		document.getElementById("mv").className = "colortextgray";
-	}
+
+
+function changeMinBridhtnessValue(val){
+	if (val>100)      val = 100;
+	else if (val<1)   val = 1;
+	document.getElementById("minBridhtness").value = val;
 };
 
+function changeMaxBridhtnessValue(val){
+	if (val>100)      val = 100;
+	else if (val<1)   val = 1;
+	document.getElementById("maxBridhtness").value = val;
+};
+
+function changeRangeValue(val){
+	document.getElementById("ledBridhtness").value = val;
+};
+
+
+//Обновление данных на странице
+function updateAllPage() {
+	document.getElementById("ledBridhtness").value = (100*dataSend["ledBridhtness"]).toFixed();
+	document.getElementById("minBridhtness").value = (100*dataSend["minBridhtness"]).toFixed();
+	document.getElementById("maxBridhtness").value = (100*dataSend["maxBridhtness"]).toFixed();
+	document.getElementById("rangeLedBridhtness").value = (100*dataSend["ledBridhtness"]).toFixed();
+	
+	document.getElementById("arrConstLedTemp0").value = rgbToHex(dataSend["arrConstLedTemp0"][0],dataSend["arrConstLedTemp0"][1], dataSend["arrConstLedTemp0"][2]);
+	document.getElementById("arrConstLedTemp1").value = rgbToHex(dataSend["arrConstLedTemp1"][0],dataSend["arrConstLedTemp1"][1], dataSend["arrConstLedTemp1"][2]);
+	document.getElementById("arrConstLedTemp2").value = rgbToHex(dataSend["arrConstLedTemp2"][0],dataSend["arrConstLedTemp2"][1], dataSend["arrConstLedTemp2"][2]);
+	
+	document.getElementById("nAnimeOn").value = dataSend["nAnimeOn"];
+	document.getElementById("nAnimeOff").value = dataSend["nAnimeOff"];
+};
+
+
+//Конвертация кода цвета Hex to RGB
+function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+//Конвертация кода цвета RGB to Hex
+function rgbToHex(r, g, b) {
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
 
 
 </script>
