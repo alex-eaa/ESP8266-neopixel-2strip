@@ -1,31 +1,121 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-	<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
-	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
-	<title>Обновление</title>
-	<link rel='stylesheet' href='style.css'>
+<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>Обновление </title>
+<style type="text/css">
+
+body{
+max-width:640px;
+margin:auto;
+padding: 10px 6px;
+font-size:16px;
+font-family:arial;
+}
+
+
+.bar1, .bar2, .bar3 {
+  width: 28px;
+  height: 4px;
+  background-color: white;
+  margin: 4px 0;
+  transition: 0.4s;
+}
+.change .bar1 {
+  -webkit-transform: rotate(-45deg) translate(-7px,6px);
+  transform: rotate(-45deg) translate(-7px,6px);
+}
+.change .bar2 {opacity: 0;}
+.change .bar3 {
+  -webkit-transform: rotate(45deg) translate(-6px,-5px);
+  transform: rotate(45deg) translate(-6px,-5px);
+}
+
+
+.topnav {
+  overflow:hidden;
+  background-color:black;
+  position:relative;
+  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.2);
+}
+.topnav #myLinks {
+  display:none;
+}
+.topnav a, .topnav #headnav {
+  color: white;
+  padding: 11px 16px;
+  text-decoration: none;
+  font-size: 16px;
+  display: block;
+}
+.topnav #headnav {
+	font-size: 18px;
+}
+.topnav a.icon{
+  padding: 8px 8px;
+  background: black;
+  display: block;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+.active {
+  background-color:#0f6389;
+  color: white;
+}
+
+
+.card {
+  margin-top: 6px;
+  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+  width: 100%;
+}
+.container {
+  padding: 2px 16px 16px 16px;
+}
+
+</style>
+<script>
+	function myFunction(x) {
+	  x.classList.toggle("change");
+
+	   var x = document.getElementById("myLinks");
+	  if (x.style.display === "block") {
+	    x.style.display = "none";
+	  } else {
+	    x.style.display = "block";
+	  }
+	}
+</script>
 </head>
 
 <body>
 
-<div id="container">
-	<ul id="menu">
-		<li><div id="hamburger"><span class="hamburger"></span></div>
-			<ul><li><a href="index.htm">Главная</a></li>
-				<li><a href="setup.htm">Настройка сети</a></li>
-				<li><a href="edit.htm">Файлы</a></li>
-				<li><a href="update.htm">Обновление</a></li>
-			</ul>
-		</li>
-	</ul>
-	<p>Сетевые настройки</p>
+<!-- Верхнее меню навигации -->
+<div class="topnav">
+	<div id="headnav" class="active">Обновление прошивки</div>
+	<div id="myLinks">
+		<a href="index.htm">Главная</a>
+		<a href="setup.htm">Настройки WiFi</a>
+		<a href="edit.htm">Файлы</a>
+		<a href="update.htm">Обновление прошивки</a>
+	</div>
+	<a class="icon">
+		<div class="containerMenu" onclick="myFunction(this)">
+			<div class="bar1"></div>
+			<div class="bar2"></div>
+			<div class="bar3"></div>
+		</div>
+	</a>
 </div>
 
-<div class='content'>
-    <h3>Обновление прошивки:</h3>
-    <form method='POST' onSubmit="return window.confirm('ОБНОВИТЬ ПРОШИВКУ?');" action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form><br>
+<div class="card">
+	<div class="container">
+		<h4>Для обновления, указать путь к файлу и нажать кнопку "Update".</h4>
+		<form method='POST' onSubmit="return window.confirm('ОБНОВИТЬ ПРОШИВКУ?');" action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form><br>
+	</div>
 </div>
-<script></script>
 </body>
 </html>

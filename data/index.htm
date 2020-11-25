@@ -4,7 +4,6 @@
 <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0'>
 <title>Главная</title>
-
 <style type="text/css">
 
 body{
@@ -47,8 +46,11 @@ font-family:arial;
   color: white;
   padding: 11px 16px;
   text-decoration: none;
-  font-size: 18px;
+  font-size: 16px;
   display: block;
+}
+.topnav #headnav {
+	font-size: 18px;
 }
 .topnav a.icon{
   padding: 8px 8px;
@@ -81,53 +83,61 @@ table .tdright {text-align: right;}
 table, select, input[type=range] {width: 100%;}
 select, input[type=number] { font-size: 16px;}
 
-.buttonContr button {font-size: 16px; width: 75px;}
+.buttonContr button {
+	width: 75px;
+	padding: 16px 0;
+	font-size: 16px;
+	color: white;
+	background-color: #555555;
+	border: 2px solid #555555;
+	border-radius: 4px;
+	transition-duration: 0.4s;
+}
+.buttonContr .buttonContrPressed{
+	background-color: #0f6389;
+	border: 2px solid #0f6389;	
+}
+
 .buttonContr .center {width: 140px;}
 
 .brightness #range {margin-bottom: 0;}
 .brightness {margin:auto;}
 
-}
-
 
 </style>
-
 <script>
+	function myFunction(x) {
+	  x.classList.toggle("change");
 
-function myFunction(x) {
-  x.classList.toggle("change");
-
-   var x = document.getElementById("myLinks");
-  if (x.style.display === "block") {
-    x.style.display = "none";
-  } else {
-    x.style.display = "block";
-  }
-}
-
+	   var x = document.getElementById("myLinks");
+	  if (x.style.display === "block") {
+	    x.style.display = "none";
+	  } else {
+	    x.style.display = "block";
+	  }
+	}
 </script>
-
 </head>
 <body>
 
 
 <!-- Верхнее меню навигации -->
 <div class="topnav">
-  <!--<a href="index.htm" class="active">Главная</a> -->
-  <div id="headnav" class="active">Главная</div>
-  <div id="myLinks">
-    <a href="index.htm">Главная</a>
-    <a href="setup.htm">Настройка сети</a>
-    <a href="edit.htm">Файлы</a>
-    <a href="update.htm">Обновление</a>
-  </div>
-  <a class="icon">
-	<div class="containerMenu" onclick="myFunction(this)">
-	  <div class="bar1"></div>
-	  <div class="bar2"></div>
-	  <div class="bar3"></div>
+	<!--<a href="index.htm" class="active">Главная</a> -->
+	<div id="headnav" class="active">Главная</div>
+	<div id="myLinks">
+		<a href="index.htm">Главная</a>
+		<a href="setup.htm">Настройки WiFi</a>
+		<a href="edit.htm">Файлы</a>
+		<a href="update.htm">Обновление прошивки</a>
 	</div>
-  </a>
+	<a class="icon">
+		<div class="containerMenu" onclick="myFunction(this)">
+			<div class="bar1"></div>
+			<div class="bar2"></div>
+			<div class="bar3"></div>
+		</div>
+	</a>
 </div>
 
 
@@ -137,13 +147,13 @@ function myFunction(x) {
 	<table>
 		<tr> 
 			<td class="tdleft">
-				<button class="left">Левый</button>
+				<button id="onOff1" class="left" onclick="pressOnOff1()">Левый</button>
 			</td>
 			<td>
-				<button class="center">Светильник</button>
+				<button id="onOffAll" class="center" onclick="pressOnOffAll()">Светильник</button>
 			</td>
 			<td class="tdright">
-				<button class="right">Правый</button>
+				<button id="onOff2" class="right" onclick="pressOnOff2()">Правый</button>
 			</td>
 		</tr>
 	</table>
@@ -219,24 +229,24 @@ function myFunction(x) {
   	<center><h4>Эффект анимации</h4></center>
   	<h5>Включения:</h5>
 	  <select class="anime" name="nAnimeOn" id="nAnimeOn">
-	    <option value="0">Анимация 11</option>
-	    <option value="1">Анимация 12</option>
-	    <option value="2">Анимация 13</option>
-	    <option value="3">Анимация 14</option>
-	    <option value="4">Анимация 15</option>
-	    <option value="5">Анимация 16</option>
-	    <option value="6">Анимация 17</option>
+	    <option value="0">Анимация 1</option>
+	    <option value="1">Анимация 2</option>
+	    <option value="2">Анимация 3</option>
+	    <option value="3">Анимация 4</option>
+	    <option value="4">Анимация 5</option>
+	    <option value="5">Анимация 6</option>
+	    <option value="6">Анимация 7</option>
 	  </select>
 	 <br><br>
 	<h5>Отключения:</h5>
 	  <select class="anime" name="nAnimeOff" id="nAnimeOff">
-	    <option value="0">Анимация 11</option>
-	    <option value="1">Анимация 12</option>
-	    <option value="2">Анимация 13</option>
-	    <option value="3">Анимация 14</option>
-	    <option value="4">Анимация 15</option>
-	    <option value="5">Анимация 16</option>
-	    <option value="6">Анимация 17</option>
+	    <option value="0">Анимация 1</option>
+	    <option value="1">Анимация 2</option>
+	    <option value="2">Анимация 3</option>
+	    <option value="3">Анимация 4</option>
+	    <option value="4">Анимация 5</option>
+	    <option value="5">Анимация 6</option>
+	    <option value="6">Анимация 7</option>
 	  </select>
   </div>
 </div>
@@ -245,6 +255,7 @@ function myFunction(x) {
 <script>
 let dataSend = {      //структура с передаваемыми и принимаемыми переменными ws серверу
 	page: "index",
+	flagLedState: false,
 	ledBridhtness: 0,
 	minBridhtness: 0,
 	maxBridhtness: 0,
@@ -256,7 +267,7 @@ let dataSend = {      //структура с передаваемыми и пр
 	arrConstLedTemp2: new Array()
 };
 
-let data = dataSend;	//структура с только принимаемыми переменными с ws серверу
+let data = {};	//структура с только принимаемыми переменными с ws серверу
 let outState = 0;
 
 function change(n) {
@@ -281,7 +292,28 @@ function outON(){
 };
 
 
+function pressOnOffAll(val){
+	dataSend["flagLedState"] = !dataSend["flagLedState"];
+	if (dataSend["flagLedState"] == 1){
+		document.getElementById("onOffAll").classList.add("buttonContrPressed");
+		document.getElementById("onOff1").classList.add("buttonContrPressed");
+		document.getElementById("onOff2").classList.add("buttonContrPressed");
+	}
+	else{
+		document.getElementById("onOffAll").classList.remove("buttonContrPressed");
+		document.getElementById("onOff1").classList.remove("buttonContrPressed");
+		document.getElementById("onOff2").classList.remove("buttonContrPressed");
+	}
+	console.log(dataSend["flagLedState"]); 
+}
 
+function pressOnOff1(val){
+	document.getElementById("onOff1").classList.toggle("buttonContrPressed");
+}
+
+function pressOnOff2(val){
+	document.getElementById("onOff2").classList.toggle("buttonContrPressed");
+}
 
 function changeMinBridhtnessValue(val){
 	if (val>100)      val = 100;
@@ -306,13 +338,22 @@ function updateAllPage() {
 	document.getElementById("minBridhtness").value = (100*dataSend["minBridhtness"]).toFixed();
 	document.getElementById("maxBridhtness").value = (100*dataSend["maxBridhtness"]).toFixed();
 	document.getElementById("rangeLedBridhtness").value = (100*dataSend["ledBridhtness"]).toFixed();
-	
 	document.getElementById("arrConstLedTemp0").value = rgbToHex(dataSend["arrConstLedTemp0"][0],dataSend["arrConstLedTemp0"][1], dataSend["arrConstLedTemp0"][2]);
 	document.getElementById("arrConstLedTemp1").value = rgbToHex(dataSend["arrConstLedTemp1"][0],dataSend["arrConstLedTemp1"][1], dataSend["arrConstLedTemp1"][2]);
 	document.getElementById("arrConstLedTemp2").value = rgbToHex(dataSend["arrConstLedTemp2"][0],dataSend["arrConstLedTemp2"][1], dataSend["arrConstLedTemp2"][2]);
-	
 	document.getElementById("nAnimeOn").value = dataSend["nAnimeOn"];
 	document.getElementById("nAnimeOff").value = dataSend["nAnimeOff"];
+
+	if (dataSend["flagLedState"] == 1){
+		document.getElementById("onOffAll").classList.add("buttonContrPressed");
+		document.getElementById("onOff1").classList.add("buttonContrPressed");
+		document.getElementById("onOff2").classList.add("buttonContrPressed");
+	}
+	else{
+		document.getElementById("onOffAll").classList.remove("buttonContrPressed");
+		document.getElementById("onOff1").classList.remove("buttonContrPressed");
+		document.getElementById("onOff2").classList.remove("buttonContrPressed");
+	}
 };
 
 
