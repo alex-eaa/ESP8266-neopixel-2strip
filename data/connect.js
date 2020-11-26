@@ -1,7 +1,7 @@
 
 //Работа с webSocket сервером
 function wsConnect(wsIP) {
-	let wsAdress = 'ws://'+wsIP+':81/'+data['page']+'.htm';
+	let wsAdress = 'ws://'+wsIP+':81/'+dataSend['page']+'.htm';
 	console.log("wsAdress=", wsAdress);
 	ws = new WebSocket(wsAdress, ['arduino']);
 	

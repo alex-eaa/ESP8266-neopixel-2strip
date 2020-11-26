@@ -188,9 +188,9 @@ void setup() {
   webServer_init();      //инициализация HTTP сервера
   webSocket_init();      //инициализация webSocket сервера
   
-  white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
-                   arrConstLedTemp[varForArrConstLedTemp][1],
-                   arrConstLedTemp[varForArrConstLedTemp][2]);
+  //white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
+ //                 arrConstLedTemp[varForArrConstLedTemp][1],
+ //                  arrConstLedTemp[varForArrConstLedTemp][2]);
 }
 
 
@@ -201,8 +201,40 @@ void loop() {
   server.handleClient();
   MDNS.update();
 
-  proximity = apds.getProximity();   //считать показания расстояния из датчика
 
+  //ПРИМЕНЕНИЕ изменений состояния флагов и параметров светильника
+  //Изменение цвет white на другой предустановленный
+  if (prevVarForArrConstLedTemp!= varForArrConstLedTemp){
+    white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
+                 arrConstLedTemp[varForArrConstLedTemp][1],
+                 arrConstLedTemp[varForArrConstLedTemp][2]);
+    prevVarForArrConstLedTemp = varForArrConstLedTemp; 
+  }
+  //Включение ленты на цвет white и яркость
+  if (flagLedState == 1 && prevFlagLedState != flagLedState){
+    onStrip(RgbColor::LinearBlend(black, white, ledBridhtness), nAnimeOn);
+    prevFlagLedState = flagLedState;
+  }
+  //Отключение ленты
+  else if (flagLedState == 0 && prevFlagLedState != flagLedState){
+    onStrip(black, nAnimeOff);
+    prevFlagLedState = flagLedState;
+  }
+  //Изменения значения переменной яркости освещения, если флаг яркости установлен и рука возле датчика
+  if (flagToBrightnessChange == 1) {
+    changeLedBridhtness();
+    flagDataUpdate = 1; 
+  }
+  //Изменение яркости освещения, если задана новая величина яркости ledBridhtness
+  if (flagLedState == 1 && prevLedBridhtness != ledBridhtness){
+    updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
+    prevLedBridhtness = ledBridhtness; 
+  }
+
+
+  //АНАЛИЗ КОМАНД на датчике расстояния
+  proximity = apds.getProximity();   //считать показания расстояния из датчика
+  
   //Если к датчику поднесли руку
   if (proximity > 0)
   {
@@ -215,63 +247,44 @@ void loop() {
       flagToOnOff = 0;
       flagToBrightnessChange = 1;
     }
-    //Вызов функции изменения яркости освещения, если флаг яркости установлен и рука возле датчика
-    if (flagToBrightnessChange == 1) {
-      changeLedBridhtness();
-    }
     //Изменение предустановленных значений температуры света при быстром повторном включении света и взведеном флаге разрешения
     if (flagToTempChange == 1 && millis() - prevTimeToTemp < timeToTemp) {
       varForArrConstLedTemp ++;
       if (varForArrConstLedTemp > 2)   varForArrConstLedTemp = 0;
-      white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
-                       arrConstLedTemp[varForArrConstLedTemp][1],
-                       arrConstLedTemp[varForArrConstLedTemp][2]);
       flagToTempChange = 0;
       flagNeedSaveConf = 1;
+      flagDataUpdate = 1;
       prevTimeSaveConf = millis();
     }
   }
   //Если руку отвели от датчика
-  else
-  {
+  else{
     //Вкл.-откл. света при отводе руки от датчика, при установленном флаге изменения света,
     //при отключении также взводим флаг разрешения изменения температуры света
-    if (flagToOnOff == 1 && flagToBrightnessChange == 0) 
-    {
+    if (flagToOnOff == 1 && flagToBrightnessChange == 0){
       flagLedState = !flagLedState;
-      if (flagLedState == 0) 
-      {
+      flagDataUpdate = 1;
+      //Dзводим флаг разрешения изменения температуры света
+      if (flagLedState == 0){
         flagToTempChange = 1;
         prevTimeToTemp = millis();
       }
       flagToOnOff = 0;
     }
     //Отключение режима настройки яркости при отводе руки от датчика и изменение направления изменения яркости на противоположное
-    if (flagToOnOff == 0 && flagToBrightnessChange == 1)
-    {
+    if (flagToOnOff == 0 && flagToBrightnessChange == 1){
       flagToBrightnessChange = 0;
       flagDirectionBrightnessChange = !flagDirectionBrightnessChange;
       flagNeedSaveConf = 1;
-      prevTimeSaveConf = millis();                             
+      prevTimeSaveConf = millis();
+      //flagDataUpdate = 1;                          
     }
     
     prevTime = millis();
   }
 
 
-  //Включение ленты на исходный цвет и яркость
-  if (flagLedState == 1 && prevFlagLedState != flagLedState)
-  {
-    prevFlagLedState = flagLedState;
-    onStrip(RgbColor::LinearBlend(black, white, ledBridhtness), nAnimeOn);
-  }
-  //Отключение ленты
-  else if (flagLedState == 0 && prevFlagLedState != flagLedState)
-  {
-    prevFlagLedState = flagLedState;
-    onStrip(black, nAnimeOff);
-  }
-
+  //СОХРАНЕНИЕ настроек свтеа в файд
   //Сохранение настроек в файл если установлен флаг и прошло время паузы
   if (flagNeedSaveConf == 1  && flagToBrightnessChange == 0 && millis()-prevTimeSaveConf > timeSaveConf){
     saveFile(FILE_CONF);
@@ -291,17 +304,6 @@ void loop() {
   
   //Serial.print((String) "CalculateBrightness=" + white.CalculateBrightness() + "\n");
   prevTimeDebug = millis();
-  }
-
-  if(millis() - prevTimeDebug2 > timeDebug2)
-  {
-    nAnimeOn ++;
-    nAnimeOff ++;
-    if (nAnimeOn == 7)   nAnimeOn = 0;
-    if (nAnimeOff == 7)  nAnimeOff = 0;
-    Serial.print((String) "nAnimeOn=" + nAnimeOn + ", ");
-    Serial.print((String) "nAnimeOff=" + nAnimeOff + "\n");
-    prevTimeDebug2 = millis(); 
   }
 #endif
 
@@ -486,8 +488,7 @@ void updateStrip(RgbColor color)
 }
 
 
-
-//Плавное изменение яркости по кругу
+//Плавное изменение значения переменной яркости по кругу
 void changeLedBridhtness()
 {
   if (ledBridhtness == minBridhtness)       flagDirectionBrightnessChange = 1;
@@ -502,6 +503,4 @@ void changeLedBridhtness()
     ledBridhtness = ledBridhtness - 0.01;
     if (ledBridhtness < minBridhtness)      ledBridhtness = minBridhtness;
   }
-  
-  updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
 }

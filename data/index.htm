@@ -83,6 +83,8 @@ table .tdright {text-align: right;}
 table, select, input[type=range] {width: 100%;}
 select, input[type=number] { font-size: 16px;}
 
+.colorSelect {background: #0f6389;}
+
 .buttonContr button {
 	width: 75px;
 	padding: 16px 0;
@@ -304,31 +306,36 @@ function pressOnOffAll(val){
 		document.getElementById("onOff1").classList.remove("buttonContrPressed");
 		document.getElementById("onOff2").classList.remove("buttonContrPressed");
 	}
+	startSendData("JSON");
 	console.log(dataSend["flagLedState"]); 
 }
 
 function pressOnOff1(val){
 	document.getElementById("onOff1").classList.toggle("buttonContrPressed");
+	startSendData("JSON");
 }
 
 function pressOnOff2(val){
 	document.getElementById("onOff2").classList.toggle("buttonContrPressed");
+	startSendData("JSON");
 }
 
 function changeMinBridhtnessValue(val){
 	if (val>100)      val = 100;
-	else if (val<1)   val = 1;
-	document.getElementById("minBridhtness").value = val;
+	dataSend["minBridhtness"] = val/100;
+	startSendData("JSON");
 };
 
 function changeMaxBridhtnessValue(val){
 	if (val>100)      val = 100;
-	else if (val<1)   val = 1;
-	document.getElementById("maxBridhtness").value = val;
+	dataSend["maxBridhtness"] = val/100;
+	startSendData("JSON");
 };
 
 function changeRangeValue(val){
 	document.getElementById("ledBridhtness").value = val;
+	dataSend["ledBridhtness"] = val/100;
+	startSendData("JSON");
 };
 
 
@@ -338,9 +345,34 @@ function updateAllPage() {
 	document.getElementById("minBridhtness").value = (100*dataSend["minBridhtness"]).toFixed();
 	document.getElementById("maxBridhtness").value = (100*dataSend["maxBridhtness"]).toFixed();
 	document.getElementById("rangeLedBridhtness").value = (100*dataSend["ledBridhtness"]).toFixed();
+	
 	document.getElementById("arrConstLedTemp0").value = rgbToHex(dataSend["arrConstLedTemp0"][0],dataSend["arrConstLedTemp0"][1], dataSend["arrConstLedTemp0"][2]);
 	document.getElementById("arrConstLedTemp1").value = rgbToHex(dataSend["arrConstLedTemp1"][0],dataSend["arrConstLedTemp1"][1], dataSend["arrConstLedTemp1"][2]);
 	document.getElementById("arrConstLedTemp2").value = rgbToHex(dataSend["arrConstLedTemp2"][0],dataSend["arrConstLedTemp2"][1], dataSend["arrConstLedTemp2"][2]);
+	
+	let x = dataSend["varForArrConstLedTemp"];
+	switch (x) {
+		case 0:
+		document.getElementById("arrConstLedTemp0").classList.add("colorSelect");
+		document.getElementById("arrConstLedTemp1").classList.remove("colorSelect");
+		document.getElementById("arrConstLedTemp2").classList.remove("colorSelect");
+		break;
+		
+		case 1:
+		document.getElementById("arrConstLedTemp0").classList.remove("colorSelect");
+		document.getElementById("arrConstLedTemp1").classList.add("colorSelect");
+		document.getElementById("arrConstLedTemp2").classList.remove("colorSelect");
+		break;
+		
+		case 2:
+		document.getElementById("arrConstLedTemp0").classList.remove("colorSelect");
+		document.getElementById("arrConstLedTemp1").classList.remove("colorSelect");
+		document.getElementById("arrConstLedTemp2").classList.add("colorSelect");
+		break;
+	}
+
+	if (dataSend["varForArrConstLedTemp"]==0) 
+
 	document.getElementById("nAnimeOn").value = dataSend["nAnimeOn"];
 	document.getElementById("nAnimeOff").value = dataSend["nAnimeOff"];
 
@@ -354,6 +386,7 @@ function updateAllPage() {
 		document.getElementById("onOff1").classList.remove("buttonContrPressed");
 		document.getElementById("onOff2").classList.remove("buttonContrPressed");
 	}
+
 };
 
 

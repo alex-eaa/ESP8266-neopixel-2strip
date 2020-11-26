@@ -2,6 +2,7 @@
 String serializationToJson_index()
 {
   DynamicJsonDocument doc(1024);
+    doc["flagLedState"] = flagLedState;
     doc["ledBridhtness"] = ledBridhtness;
     doc["minBridhtness"] = minBridhtness;
     doc["maxBridhtness"] = maxBridhtness;
@@ -54,6 +55,7 @@ void deserealizationFromJson(const String &json) {
     Serial.println(F("Failed to deserialization data from client"));
   }
   else if (doc["page"].as<String>() == "index") {    //JSON-строка с данными со страницы /index.htm
+    flagLedState = doc["flagLedState"];
     ledBridhtness = doc["ledBridhtness"];                   //Serial.println(ledBridhtness);
     minBridhtness = doc["minBridhtness"];                   //Serial.println(minBridhtness);
     maxBridhtness = doc["maxBridhtness"];                   //Serial.println(maxBridhtness);
@@ -65,7 +67,6 @@ void deserealizationFromJson(const String &json) {
       arrConstLedTemp[1][n] = doc["arrConstLedTemp1"][n];   //Serial.println(arrConstLedTemp[1][n]);
       arrConstLedTemp[2][n] = doc["arrConstLedTemp2"][n];   //Serial.println(arrConstLedTemp[2][n]);
     }
-    flagDataUpdate = 1;
   }
   else if (doc["page"].as<String>() == "setup") {    //JSON-строка с данными со страницы /setup.htm
     delete[] p_passwordAP;
