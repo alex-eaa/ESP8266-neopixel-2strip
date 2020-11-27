@@ -103,6 +103,7 @@ select, input[type=number] { font-size: 16px;}
 
 .brightness #range {margin-bottom: 0;}
 .brightness {margin:auto;}
+
 </style>
 
 <script>
@@ -213,9 +214,9 @@ select, input[type=number] { font-size: 16px;}
 		</td>
 		</tr>
 		<tr> 
-		<td><input type="radio" value="0" onclick="selectColor(this.value)"></td>
-		<td><input type="radio" value="1" onclick="selectColor(this.value)"></td>
-		<td><input type="radio" value="2" onclick="selectColor(this.value)"></td>
+		<td><input type="radio" name="color" value="0" onclick="selectColor(this.value)"></td>
+		<td><input type="radio" name="color" value="1" onclick="selectColor(this.value)"></td>
+		<td><input type="radio" name="color" value="2" onclick="selectColor(this.value)"></td>
 		</tr>
 	</table>
   </center>
@@ -258,7 +259,7 @@ select, input[type=number] { font-size: 16px;}
 	  </select>
   </div>
 </div>
-	
+
 
 <script>
 let dataSend = {      //структура с передаваемыми и принимаемыми переменными ws серверу
