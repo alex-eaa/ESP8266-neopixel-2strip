@@ -1,4 +1,3 @@
-
 //Работа с webSocket сервером
 function wsConnect(wsIP) {
 	let wsAdress = 'ws://'+wsIP+':81/'+dataSend['page']+'.htm';
@@ -26,11 +25,23 @@ function wsConnect(wsIP) {
 }
 
 
-
+//Отправка команд WS серверу
 function startSendData(command) {
 	switch (command) {
 		case "JSON":
 			sendFinishData(JSON.stringify(dataSend));
+			break;
+		case "onLED1":
+			sendFinishData('onLED1');
+			break;
+		case "offLED1":
+			sendFinishData('offLED1');
+			break;
+		case "onLED2":
+			sendFinishData('onLED2');
+			break;
+		case "offLED2":
+			sendFinishData('offLED2');
 			break;
 		case "RESET":
 			sendFinishData('RESET');
@@ -38,6 +49,7 @@ function startSendData(command) {
 	}
 
 	function sendFinishData(dat){
+		console.log('WS TO Server: ', dat);
 		if (flagWsState==1){
 			console.log('WS TO Server: ', dat);
 			ws.send(dat);
@@ -48,7 +60,7 @@ function startSendData(command) {
 
 
 
-
+//Сохранение полученный json-данных в структуру параметров
 function receivedDataProcessing(strJson){
 	try {
 		let obj=JSON.parse(strJson);

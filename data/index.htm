@@ -79,11 +79,10 @@ font-family:arial;
 
 table td {text-align: center;}
 table .tdleft {text-align: left;}
+table .tdcenter {text-align: center;}
 table .tdright {text-align: right;}
 table, select, input[type=range] {width: 100%;}
 select, input[type=number] { font-size: 16px;}
-
-.colorSelect {background: #0f6389;}
 
 .buttonContr button {
 	width: 75px;
@@ -104,9 +103,8 @@ select, input[type=number] { font-size: 16px;}
 
 .brightness #range {margin-bottom: 0;}
 .brightness {margin:auto;}
-
-
 </style>
+
 <script>
 	function myFunction(x) {
 	  x.classList.toggle("change");
@@ -119,6 +117,7 @@ select, input[type=number] { font-size: 16px;}
 	  }
 	}
 </script>
+
 </head>
 <body>
 
@@ -149,13 +148,13 @@ select, input[type=number] { font-size: 16px;}
 	<table>
 		<tr> 
 			<td class="tdleft">
-				<button id="onOff1" class="left" onclick="pressOnOff1()">Левый</button>
+				<button id="onOff1" class="left" onclick="pressOnOff(this.id)">Левый</button>
 			</td>
 			<td>
-				<button id="onOffAll" class="center" onclick="pressOnOffAll()">Светильник</button>
+				<button id="onOffAll" class="center" onclick="pressOnOff(this.id)">Светильник</button>
 			</td>
 			<td class="tdright">
-				<button id="onOff2" class="right" onclick="pressOnOff2()">Правый</button>
+				<button id="onOff2" class="right" onclick="pressOnOff(this.id)">Правый</button>
 			</td>
 		</tr>
 	</table>
@@ -168,18 +167,18 @@ select, input[type=number] { font-size: 16px;}
 	<table>
 		<tr> 
 			<td class="tdleft">
-				<input type="number" id="minBridhtness" max="100" min="1" onblur="changeMinBridhtnessValue(this.value)">
+				<input type="number" id="minBridhtness" max="100" min="1" onblur="changeMinMaxBridhtnessValue(this.value, this.id)">
 			</td>
 			<td>
-				<input type="number" id="ledBridhtness" max="100" min="1" step="1" readonly >
+				<input type="number" id="ledBridhtness" max="100" min="1" step="1" readonly>
 			</td>
 			<td class="tdright">
-				<input type="number" id="maxBridhtness" max="100" min="1" onblur="changeMaxBridhtnessValue(this.value)">
+				<input type="number" id="maxBridhtness" max="100" min="1" onblur="changeMinMaxBridhtnessValue(this.value, this.id)">
 			</td>
 		</tr>
 	</table>
 	<p id="range">
-		<input type="range" id="rangeLedBridhtness" min="0" max="100" list="rangeList" oninput="changeRangeValue(this.value)">
+		<input type="range" id="rangeLedBridhtness" min="0" max="100" list="rangeList" oninput="changeRangeValue(this.value)" onchange="setRangeValue()">
 	</p>
 	<datalist id="rangeList">
 		<option value="0" label="0">
@@ -201,17 +200,24 @@ select, input[type=number] { font-size: 16px;}
 <div class="card">
   <div class="container">
   	<center><h4>Предустановленные цвета</h4>
-  	<table><tr> 
+  	<table>
+  		<tr> 
 		<td class="tdleft">
-			<input type="color" id="arrConstLedTemp0" list="colorList">
+			<input type="color" id="arrConstLedTemp0" list="colorList" oninput="changeColor(this.value, this.id)">
 		</td>
 		<td>
-			<input type="color" id="arrConstLedTemp1" list="colorList">
+			<input type="color" id="arrConstLedTemp1" list="colorList" oninput="changeColor(this.value, this.id)">
 		</td>
 		<td class="tdright">
-			<input type="color" id="arrConstLedTemp2" list="colorList">
+			<input type="color" id="arrConstLedTemp2" list="colorList" oninput="changeColor(this.value,  this.id)">
 		</td>
-	</tr></table>
+		</tr>
+		<tr> 
+		<td><input type="radio" value="0" onclick="selectColor(this.value)"></td>
+		<td><input type="radio" value="1" onclick="selectColor(this.value)"></td>
+		<td><input type="radio" value="2" onclick="selectColor(this.value)"></td>
+		</tr>
+	</table>
   </center>
 	<datalist id="colorList">
 		<option value="#ffffff" label="Белый">
@@ -230,7 +236,7 @@ select, input[type=number] { font-size: 16px;}
   <div class="container">
   	<center><h4>Эффект анимации</h4></center>
   	<h5>Включения:</h5>
-	  <select class="anime" name="nAnimeOn" id="nAnimeOn">
+	  <select class="anime" id="nAnimeOn" oninput="changeAnime(this.value, this.id)">
 	    <option value="0">Анимация 1</option>
 	    <option value="1">Анимация 2</option>
 	    <option value="2">Анимация 3</option>
@@ -241,7 +247,7 @@ select, input[type=number] { font-size: 16px;}
 	  </select>
 	 <br><br>
 	<h5>Отключения:</h5>
-	  <select class="anime" name="nAnimeOff" id="nAnimeOff">
+	  <select class="anime" id="nAnimeOff" oninput="changeAnime(this.value, this.id)">
 	    <option value="0">Анимация 1</option>
 	    <option value="1">Анимация 2</option>
 	    <option value="2">Анимация 3</option>
@@ -270,77 +276,121 @@ let dataSend = {      //структура с передаваемыми и пр
 };
 
 let data = {};	//структура с только принимаемыми переменными с ws серверу
-let outState = 0;
-
-function change(n) {
-	if (dataSend["unity"] + n > 200)   dataSend["unity"] = 200;
-	else if (dataSend["unity"] + n < 0)   dataSend["unity"] = 0;
-	else   dataSend["unity"] += n;
-
-	updateAllPage();
-	if (dataSend["outState"] == 1)	 startSendData("JSON");
-};
+let onOff1, onOff2;
 
 
-function outOFF(){
-	dataSend["outState"] = 0;
-	startSendData("JSON");
-};
+//Кнопки включения-отключения
+function pressOnOff(id){
+	switch (id) {
+		case "onOffAll":
+			dataSend["flagLedState"] = !dataSend["flagLedState"];
+			if (dataSend["flagLedState"] == 1){
+				document.getElementById("onOffAll").classList.add("buttonContrPressed");
+				document.getElementById("onOff1").classList.add("buttonContrPressed");
+				document.getElementById("onOff2").classList.add("buttonContrPressed");
+			}
+			else{
+				document.getElementById("onOffAll").classList.remove("buttonContrPressed");
+				document.getElementById("onOff1").classList.remove("buttonContrPressed");
+				document.getElementById("onOff2").classList.remove("buttonContrPressed");
+			}
+			onOff1 = dataSend["flagLedState"];
+			onOff2 = dataSend["flagLedState"];
+			startSendData("JSON");
+		break;
 
+		case "onOff1":
+			onOff1 = !onOff1;
+			if (onOff1==1)  startSendData("onLED1");
+			else  startSendData("offLED1");
+		break;
 
-function outON(){
-	dataSend["outState"] = 1;
-	startSendData("JSON");
-};
-
-
-function pressOnOffAll(val){
-	dataSend["flagLedState"] = !dataSend["flagLedState"];
-	if (dataSend["flagLedState"] == 1){
-		document.getElementById("onOffAll").classList.add("buttonContrPressed");
-		document.getElementById("onOff1").classList.add("buttonContrPressed");
-		document.getElementById("onOff2").classList.add("buttonContrPressed");
+		case "onOff2":
+			onOff2 = !onOff2;
+			if (onOff2==1)  startSendData("onLED2");
+			else  startSendData("offLED2");
+		break;
 	}
-	else{
-		document.getElementById("onOffAll").classList.remove("buttonContrPressed");
-		document.getElementById("onOff1").classList.remove("buttonContrPressed");
-		document.getElementById("onOff2").classList.remove("buttonContrPressed");
-	}
-	startSendData("JSON");
-	console.log(dataSend["flagLedState"]); 
-}
-
-function pressOnOff1(val){
-	document.getElementById("onOff1").classList.toggle("buttonContrPressed");
-	startSendData("JSON");
-}
-
-function pressOnOff2(val){
-	document.getElementById("onOff2").classList.toggle("buttonContrPressed");
-	startSendData("JSON");
-}
-
-function changeMinBridhtnessValue(val){
-	if (val>100)      val = 100;
-	dataSend["minBridhtness"] = val/100;
-	startSendData("JSON");
+	updateClassOnOff12();
 };
 
-function changeMaxBridhtnessValue(val){
-	if (val>100)      val = 100;
-	dataSend["maxBridhtness"] = val/100;
-	startSendData("JSON");
-};
+function updateClassOnOff12(){
+	if (onOff1==1)  document.getElementById("onOff1").classList.add("buttonContrPressed");
+	else document.getElementById("onOff1").classList.remove("buttonContrPressed");
+	if (onOff2==1)  document.getElementById("onOff2").classList.add("buttonContrPressed");
+	else document.getElementById("onOff2").classList.remove("buttonContrPressed");
+}
 
+
+//Управление яркостью
 function changeRangeValue(val){
 	document.getElementById("ledBridhtness").value = val;
 	dataSend["ledBridhtness"] = val/100;
+};
+function setRangeValue (){
 	startSendData("JSON");
 };
+//Изменение min-max пределов яркости 
+function changeMinMaxBridhtnessValue(val, id){
+	if (val>100)      val = 100;
+	dataSend[id] = val/100;
+	startSendData("JSON");
+};
+
+
+
+//Выбор предустановленного цвета
+function selectColor(val){
+	dataSend["varForArrConstLedTemp"] = val;
+	startSendData("JSON");
+}
+//Изменение цвета освещения
+function changeColor(val, id){
+	let rgb = hexToRgb(val);
+	dataSend[id][0] = rgb["r"];
+	dataSend[id][1] = rgb["g"];
+	dataSend[id][2] = rgb["b"];
+	startSendData("JSON");
+
+	//Конвертация кода цвета Hex to RGB
+	function hexToRgb(hex) {
+		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return result ? {
+			r: parseInt(result[1], 16),
+			g: parseInt(result[2], 16),
+			b: parseInt(result[3], 16)
+		} : null;
+	}
+
+	//Конвертация кода цвета RGB to Hex
+	function rgbToHex(r, g, b) {
+	  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+		 
+		 function componentToHex(c) {
+		  var hex = c.toString(16);
+		  return hex.length == 1 ? "0" + hex : hex;
+		}
+	}
+};
+
+
+//Выбор анимации
+function changeAnime(val, id){
+	dataSend[id] = val;
+	startSendData("JSON");
+};
+
 
 
 //Обновление данных на странице
 function updateAllPage() {
+	onOff1 = dataSend["flagLedState"];
+	onOff2 = dataSend["flagLedState"];
+	updateClassOnOff12();
+
+	if (dataSend["flagLedState"] == 1) document.getElementById("onOffAll").classList.add("buttonContrPressed");
+	else document.getElementById("onOffAll").classList.remove("buttonContrPressed");
+
 	document.getElementById("ledBridhtness").value = (100*dataSend["ledBridhtness"]).toFixed();
 	document.getElementById("minBridhtness").value = (100*dataSend["minBridhtness"]).toFixed();
 	document.getElementById("maxBridhtness").value = (100*dataSend["maxBridhtness"]).toFixed();
@@ -350,56 +400,9 @@ function updateAllPage() {
 	document.getElementById("arrConstLedTemp1").value = rgbToHex(dataSend["arrConstLedTemp1"][0],dataSend["arrConstLedTemp1"][1], dataSend["arrConstLedTemp1"][2]);
 	document.getElementById("arrConstLedTemp2").value = rgbToHex(dataSend["arrConstLedTemp2"][0],dataSend["arrConstLedTemp2"][1], dataSend["arrConstLedTemp2"][2]);
 	
-	let x = dataSend["varForArrConstLedTemp"];
-	switch (x) {
-		case 0:
-		document.getElementById("arrConstLedTemp0").classList.add("colorSelect");
-		document.getElementById("arrConstLedTemp1").classList.remove("colorSelect");
-		document.getElementById("arrConstLedTemp2").classList.remove("colorSelect");
-		break;
-		
-		case 1:
-		document.getElementById("arrConstLedTemp0").classList.remove("colorSelect");
-		document.getElementById("arrConstLedTemp1").classList.add("colorSelect");
-		document.getElementById("arrConstLedTemp2").classList.remove("colorSelect");
-		break;
-		
-		case 2:
-		document.getElementById("arrConstLedTemp0").classList.remove("colorSelect");
-		document.getElementById("arrConstLedTemp1").classList.remove("colorSelect");
-		document.getElementById("arrConstLedTemp2").classList.add("colorSelect");
-		break;
-	}
-
-	if (dataSend["varForArrConstLedTemp"]==0) 
-
 	document.getElementById("nAnimeOn").value = dataSend["nAnimeOn"];
 	document.getElementById("nAnimeOff").value = dataSend["nAnimeOff"];
-
-	if (dataSend["flagLedState"] == 1){
-		document.getElementById("onOffAll").classList.add("buttonContrPressed");
-		document.getElementById("onOff1").classList.add("buttonContrPressed");
-		document.getElementById("onOff2").classList.add("buttonContrPressed");
-	}
-	else{
-		document.getElementById("onOffAll").classList.remove("buttonContrPressed");
-		document.getElementById("onOff1").classList.remove("buttonContrPressed");
-		document.getElementById("onOff2").classList.remove("buttonContrPressed");
-	}
-
 };
-
-
-//Конвертация кода цвета Hex to RGB
-function componentToHex(c) {
-  var hex = c.toString(16);
-  return hex.length == 1 ? "0" + hex : hex;
-}
-
-//Конвертация кода цвета RGB to Hex
-function rgbToHex(r, g, b) {
-  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-}
 
 
 </script>
