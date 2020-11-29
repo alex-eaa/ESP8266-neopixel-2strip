@@ -55,7 +55,6 @@ void deserealizationFromJson(const String &json) {
     Serial.println(F("Failed to deserialization data from client"));
   }
   else if (doc["page"].as<String>() == "index") {    //JSON-строка с данными со страницы /index.htm
-    flagLedState = doc["flagLedState"];
     ledBridhtness = doc["ledBridhtness"];                   //Serial.println(ledBridhtness);
     minBridhtness = doc["minBridhtness"];                   //Serial.println(minBridhtness);
     maxBridhtness = doc["maxBridhtness"];                   //Serial.println(maxBridhtness);

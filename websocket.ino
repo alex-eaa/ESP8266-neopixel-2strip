@@ -40,12 +40,32 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 #ifdef DEBUG
         Serial.printf("\n[%u] get from WS: %s\n", num, payload);
 #endif
-        if (strcmp((char *)payload, "RESET") == 0) {
+        if (strcmp((char *)payload, "onLED12") == 0) {
+          flagLedState = 1;
+        }
+        else if (strcmp((char *)payload, "offLED12") == 0) {
+          flagLedState = 0;
+        }
+        else if (strcmp((char *)payload, "onLED1") == 0) {
+          
+        }
+        else if (strcmp((char *)payload, "offLED1") == 0) {
+          
+        }
+        else if (strcmp((char *)payload, "onLED2") == 0) {
+          
+        }
+        else if (strcmp((char *)payload, "offLED2") == 0) {
+          
+        }
+        else if (strcmp((char *)payload, "RESET") == 0) {
           delay(50);
           ESP.reset();
         }
         else {
           deserealizationFromJson((char *)payload);
+          flagNeedSaveConf = 1;
+          prevTimeSaveConf = millis();
         }
         break;
       }

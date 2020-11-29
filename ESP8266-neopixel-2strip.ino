@@ -112,16 +112,17 @@ unsigned int timeToTemp = 1000;           //Время до повторного
 unsigned int timeSaveConf = 5000;         //Время до сохранения настроек после изменения яркости или температуры света
 
 bool prevFlagLedState;                    //Вспомогательная переменная
-int prevLedBridhtness;                    //Вспомогательная переменная
+float prevLedBridhtness;                  //Вспомогательная переменная
 int prevVarForArrConstLedTemp;            //Вспомогательная переменная
+int prevArrConstLedTemp[3];               //Вспомогательная переменная
 unsigned int prevTime = 0;                //Вспомогательная переменная для времени жестов
 unsigned int prevTimeToTemp = 0;          //Вспомогательная переменная для времени жеста изменеия температуры света
 unsigned int prevTimeSaveConf = 0;        //Вспомогательная переменная для времени сохранения настроек
 
-unsigned int timeDebug = 500;             //Вспомогательная переменная для отладки
+unsigned int timeDebug = 1000;             //Вспомогательная переменная для отладки
 unsigned int prevTimeDebug = 0;           //Вспомогательная переменная для отладки
-unsigned int timeDebug2 = 10000;             //Вспомогательная переменная для отладки
-unsigned int prevTimeDebug2 = 0;           //Вспомогательная переменная для отладки
+unsigned int timeDebug2 = 10000;          //Вспомогательная переменная для отладки
+unsigned int prevTimeDebug2 = 0;          //Вспомогательная переменная для отладки
 
 //Создаем необходимые объекты
 WebSocketsServer webSocket(81);
@@ -131,7 +132,7 @@ iarduino_APDS9930 apds;         /*Определяем объект apds для 
 NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> strip1(PIXEL_COUNT, GPIO_WS2812B_1);
 NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> strip2(PIXEL_COUNT, GPIO_WS2812B_2);
 
-RgbColor white(255, 204, 204);
+RgbColor white(200, 200, 200);
 RgbColor black(0);
 
 void setup() {
@@ -155,7 +156,7 @@ void setup() {
   printFile(FILE_CONF);
 #endif
 
-  //loadFile(FILE_CONF);
+  loadFile(FILE_CONF);
 
 
   //Запуск точки доступа с параметрами поумолчанию если файл настроек сети отсутствует или зажата кнопка
@@ -188,9 +189,9 @@ void setup() {
   webServer_init();      //инициализация HTTP сервера
   webSocket_init();      //инициализация webSocket сервера
   
-  //white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
- //                 arrConstLedTemp[varForArrConstLedTemp][1],
- //                  arrConstLedTemp[varForArrConstLedTemp][2]);
+  white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
+                  arrConstLedTemp[varForArrConstLedTemp][1],
+                  arrConstLedTemp[varForArrConstLedTemp][2]);
 }
 
 
@@ -203,14 +204,13 @@ void loop() {
 
 
   //ПРИМЕНЕНИЕ изменений состояния флагов и параметров светильника
-  //Изменение цвет white на другой предустановленный
-  if (prevVarForArrConstLedTemp!= varForArrConstLedTemp){
-    white = RgbColor(arrConstLedTemp[varForArrConstLedTemp][0],
-                 arrConstLedTemp[varForArrConstLedTemp][1],
-                 arrConstLedTemp[varForArrConstLedTemp][2]);
-    prevVarForArrConstLedTemp = varForArrConstLedTemp; 
+  //Изменения значения переменной яркости освещения, если флаг яркости установлен и рука возле датчика
+  if (flagToBrightnessChange == 1) {
+    changeLedBridhtness();
+    flagDataUpdate = 1; 
   }
-  //Включение ленты на цвет white и яркость
+  
+  //Включение ленты на цвет-white и яркость-ledBridhtness
   if (flagLedState == 1 && prevFlagLedState != flagLedState){
     onStrip(RgbColor::LinearBlend(black, white, ledBridhtness), nAnimeOn);
     prevFlagLedState = flagLedState;
@@ -220,16 +220,41 @@ void loop() {
     onStrip(black, nAnimeOff);
     prevFlagLedState = flagLedState;
   }
-  //Изменения значения переменной яркости освещения, если флаг яркости установлен и рука возле датчика
-  if (flagToBrightnessChange == 1) {
-    changeLedBridhtness();
-    flagDataUpdate = 1; 
+  
+  //Изменение цвет white на другой предустановленный
+  if (prevVarForArrConstLedTemp != varForArrConstLedTemp){
+    RgbColor color (arrConstLedTemp[varForArrConstLedTemp][0],
+                 arrConstLedTemp[varForArrConstLedTemp][1],
+                 arrConstLedTemp[varForArrConstLedTemp][2]); 
+
+    white = RgbColor::LinearBlend(white, color, 1);
+    if (flagLedState == 1) updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
+    prevVarForArrConstLedTemp = varForArrConstLedTemp; 
   }
+  
+  //Изменение текущего предустановленного цвета при его изменении
+  if (prevArrConstLedTemp[0] != arrConstLedTemp[varForArrConstLedTemp][0] ||
+      prevArrConstLedTemp[1] != arrConstLedTemp[varForArrConstLedTemp][1] ||
+      prevArrConstLedTemp[2] != arrConstLedTemp[varForArrConstLedTemp][2]) {
+
+    RgbColor color (arrConstLedTemp[varForArrConstLedTemp][0],
+                 arrConstLedTemp[varForArrConstLedTemp][1],
+                 arrConstLedTemp[varForArrConstLedTemp][2]); 
+
+    white = RgbColor::LinearBlend(white, color, 1);
+    if (flagLedState == 1) updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
+               
+    prevArrConstLedTemp[0] = arrConstLedTemp[varForArrConstLedTemp][0];
+    prevArrConstLedTemp[1] = arrConstLedTemp[varForArrConstLedTemp][1];
+    prevArrConstLedTemp[2] = arrConstLedTemp[varForArrConstLedTemp][2];
+  }
+
   //Изменение яркости освещения, если задана новая величина яркости ledBridhtness
-  if (flagLedState == 1 && prevLedBridhtness != ledBridhtness){
-    updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
-    prevLedBridhtness = ledBridhtness; 
-  }
+  if (prevLedBridhtness != ledBridhtness){
+    if (flagLedState == 1) updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
+    prevLedBridhtness = ledBridhtness;
+  }    
+  
 
 
   //АНАЛИЗ КОМАНД на датчике расстояния
@@ -284,7 +309,7 @@ void loop() {
   }
 
 
-  //СОХРАНЕНИЕ настроек свтеа в файд
+  //СОХРАНЕНИЕ настроек света в файл
   //Сохранение настроек в файл если установлен флаг и прошло время паузы
   if (flagNeedSaveConf == 1  && flagToBrightnessChange == 0 && millis()-prevTimeSaveConf > timeSaveConf){
     saveFile(FILE_CONF);
@@ -300,7 +325,7 @@ void loop() {
   //Serial.print((String) "B=" + ledBridhtness + ", ");
   //Serial.print((String) "T=" + varForArrConstLedTemp + "\n");
   
-  //Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
+  Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
   
   //Serial.print((String) "CalculateBrightness=" + white.CalculateBrightness() + "\n");
   prevTimeDebug = millis();

@@ -43,6 +43,12 @@ function startSendData(command) {
 		case "offLED2":
 			sendFinishData('offLED2');
 			break;
+		case "onLED12":
+			sendFinishData('onLED12');
+			break;
+		case "offLED12":
+			sendFinishData('offLED12');
+			break;
 		case "RESET":
 			sendFinishData('RESET');
 			break;

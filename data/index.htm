@@ -264,7 +264,6 @@ select, input[type=number] { font-size: 16px;}
 <script>
 let dataSend = {      //структура с передаваемыми и принимаемыми переменными ws серверу
 	page: "index",
-	flagLedState: false,
 	ledBridhtness: 0,
 	minBridhtness: 0,
 	maxBridhtness: 0,
@@ -276,7 +275,7 @@ let dataSend = {      //структура с передаваемыми и пр
 	arrConstLedTemp2: new Array()
 };
 
-let data = {};	//структура с только принимаемыми переменными с ws серверу
+let data = {flagLedState: false};	//структура с только принимаемыми переменными с ws серверу
 let onOff1, onOff2;
 
 
@@ -284,20 +283,19 @@ let onOff1, onOff2;
 function pressOnOff(id){
 	switch (id) {
 		case "onOffAll":
-			dataSend["flagLedState"] = !dataSend["flagLedState"];
-			if (dataSend["flagLedState"] == 1){
+			data["flagLedState"] = !data["flagLedState"];
+			onOff1 = data["flagLedState"];
+			onOff2 = data["flagLedState"];
+			if (data["flagLedState"] == 1){
 				document.getElementById("onOffAll").classList.add("buttonContrPressed");
-				document.getElementById("onOff1").classList.add("buttonContrPressed");
-				document.getElementById("onOff2").classList.add("buttonContrPressed");
+				startSendData("onLED12");
 			}
 			else{
 				document.getElementById("onOffAll").classList.remove("buttonContrPressed");
-				document.getElementById("onOff1").classList.remove("buttonContrPressed");
-				document.getElementById("onOff2").classList.remove("buttonContrPressed");
+				startSendData("offLED12");
 			}
-			onOff1 = dataSend["flagLedState"];
-			onOff2 = dataSend["flagLedState"];
-			startSendData("JSON");
+
+			//startSendData("JSON");
 		break;
 
 		case "onOff1":
@@ -352,26 +350,6 @@ function changeColor(val, id){
 	dataSend[id][1] = rgb["g"];
 	dataSend[id][2] = rgb["b"];
 	startSendData("JSON");
-
-	//Конвертация кода цвета Hex to RGB
-	function hexToRgb(hex) {
-		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-		return result ? {
-			r: parseInt(result[1], 16),
-			g: parseInt(result[2], 16),
-			b: parseInt(result[3], 16)
-		} : null;
-	}
-
-	//Конвертация кода цвета RGB to Hex
-	function rgbToHex(r, g, b) {
-	  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-		 
-		 function componentToHex(c) {
-		  var hex = c.toString(16);
-		  return hex.length == 1 ? "0" + hex : hex;
-		}
-	}
 };
 
 
@@ -385,11 +363,11 @@ function changeAnime(val, id){
 
 //Обновление данных на странице
 function updateAllPage() {
-	onOff1 = dataSend["flagLedState"];
-	onOff2 = dataSend["flagLedState"];
+	onOff1 = data["flagLedState"];
+	onOff2 = data["flagLedState"];
 	updateClassOnOff12();
 
-	if (dataSend["flagLedState"] == 1) document.getElementById("onOffAll").classList.add("buttonContrPressed");
+	if (data["flagLedState"] == 1) document.getElementById("onOffAll").classList.add("buttonContrPressed");
 	else document.getElementById("onOffAll").classList.remove("buttonContrPressed");
 
 	document.getElementById("ledBridhtness").value = (100*dataSend["ledBridhtness"]).toFixed();
@@ -400,11 +378,40 @@ function updateAllPage() {
 	document.getElementById("arrConstLedTemp0").value = rgbToHex(dataSend["arrConstLedTemp0"][0],dataSend["arrConstLedTemp0"][1], dataSend["arrConstLedTemp0"][2]);
 	document.getElementById("arrConstLedTemp1").value = rgbToHex(dataSend["arrConstLedTemp1"][0],dataSend["arrConstLedTemp1"][1], dataSend["arrConstLedTemp1"][2]);
 	document.getElementById("arrConstLedTemp2").value = rgbToHex(dataSend["arrConstLedTemp2"][0],dataSend["arrConstLedTemp2"][1], dataSend["arrConstLedTemp2"][2]);
+
+	var inp = document.getElementsByName('color');
+    for (var i = 0; i < inp.length; i++) {
+        if (inp[i].value == dataSend["varForArrConstLedTemp"]) {
+            inp[i].checked = true;
+            break;
+        }
+    }
 	
 	document.getElementById("nAnimeOn").value = dataSend["nAnimeOn"];
 	document.getElementById("nAnimeOff").value = dataSend["nAnimeOff"];
 };
 
+
+
+//Конвертация кода цвета Hex to RGB
+function hexToRgb(hex) {
+	var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	return result ? {
+		r: parseInt(result[1], 16),
+		g: parseInt(result[2], 16),
+		b: parseInt(result[3], 16)
+	} : null;
+};
+
+//Конвертация кода цвета RGB to Hex
+function rgbToHex(r, g, b) {
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+	 
+	 function componentToHex(c) {
+	  var hex = c.toString(16);
+	  return hex.length == 1 ? "0" + hex : hex;
+	}
+};
 
 </script>
 <script src="connect.js" type="text/javascript"></script>
