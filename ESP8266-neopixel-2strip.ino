@@ -320,12 +320,12 @@ void loop() {
 #ifdef DEBUG
   if(millis() - prevTimeDebug > timeDebug)
   { 
-  //Serial.print((String) "proximity=" + proximity + ", ");
-  //Serial.print((String) "ON=" + flagLedState + ", ");
+  Serial.print((String) "proximity=" + proximity + ", ");
+  Serial.println((String) "ON=" + flagLedState + ", ");
   //Serial.print((String) "B=" + ledBridhtness + ", ");
   //Serial.print((String) "T=" + varForArrConstLedTemp + "\n");
   
-  Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
+  //Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
   
   //Serial.print((String) "CalculateBrightness=" + white.CalculateBrightness() + "\n");
   prevTimeDebug = millis();
