@@ -260,6 +260,12 @@ select, input[type=number] { font-size: 16px;}
   </div>
 </div>
 
+<div class="card">
+	<div class="container save">
+  		<p><center><button id="save" onclick="save()">Сохранить настройки</button></center></p>
+	</div>
+</div>
+
 
 <script>
 let dataSend = {      //структура с передаваемыми и принимаемыми переменными ws серверу
@@ -359,6 +365,11 @@ function changeAnime(val, id){
 	startSendData("JSON");
 };
 
+
+//Сохранить настройки
+function save(){
+	startSendData("SAVE");
+};
 
 
 //Обновление данных на странице

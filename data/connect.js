@@ -49,13 +49,16 @@ function startSendData(command) {
 		case "offLED12":
 			sendFinishData('offLED12');
 			break;
+		case "SAVE":
+			sendFinishData('SAVE');
+			break;
 		case "RESET":
 			sendFinishData('RESET');
 			break;
 	}
 
 	function sendFinishData(dat){
-		console.log('WS TO Server: ', dat);
+		//console.log('WS TO Server: ', dat);
 		if (flagWsState==1){
 			console.log('WS TO Server: ', dat);
 			ws.send(dat);

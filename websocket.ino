@@ -9,8 +9,8 @@ void webSocket_init()
 //функция обработки входящих на сервер WebSocket сообщений
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
 {
+  int timeStart = micros();
   switch (type) {
-
     case WStype_DISCONNECTED:
       sendSpeedDataEnable[num] = 0;
 #ifdef DEBUG
@@ -38,7 +38,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     case WStype_TEXT:
       {
 #ifdef DEBUG
-        Serial.printf("\n[%u] get from WS: %s\n", num, payload);
+        //Serial.printf("\n[%u] get from WS: %s\n", num, payload);
 #endif
         if (strcmp((char *)payload, "onLED12") == 0) {
           flagLedState = 1;
@@ -47,16 +47,19 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           flagLedState = 0;
         }
         else if (strcmp((char *)payload, "onLED1") == 0) {
-          
+          onOffStrips(1, ON);
         }
         else if (strcmp((char *)payload, "offLED1") == 0) {
-          
+          onOffStrips(1, OFF);
         }
         else if (strcmp((char *)payload, "onLED2") == 0) {
-          
+          onOffStrips(2, ON);
         }
         else if (strcmp((char *)payload, "offLED2") == 0) {
-          
+          onOffStrips(2, OFF);
+        }
+        else if (strcmp((char *)payload, "SAVE") == 0) {
+          saveFile(FILE_CONF);
         }
         else if (strcmp((char *)payload, "RESET") == 0) {
           delay(50);
@@ -64,8 +67,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         }
         else {
           deserealizationFromJson((char *)payload);
-          flagNeedSaveConf = 1;
-          prevTimeSaveConf = millis();
         }
         break;
       }
@@ -78,16 +79,21 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       break;
   }
 
+  int deltaTime = micros() - timeStart;
+  Serial.print(F("webSocketEvent time="));  Serial.println(deltaTime);
 }
 
 
 void sendToWsClient(int num, String json) {
+  int timeStart = micros();
 #ifdef DEBUG
-  Serial.printf("\n[%u] ", num);
-  Serial.print("sent to WS_Client: ");
-  Serial.println(json);
+  //Serial.printf("\n[%u] ", num);
+  //Serial.print("sent to WS_Client: ");
+  //Serial.println(json);
 #endif
   webSocket.sendTXT(num, json);
+  int deltaTime = micros() - timeStart;
+  Serial.print(F("sendToWsClient time="));  Serial.println(deltaTime);
 }
 
 

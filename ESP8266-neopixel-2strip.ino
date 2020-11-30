@@ -67,6 +67,8 @@
 
 #define DEFAULT_AP_NAME "ESP"           //имя точки доступа "По умолчанию"
 #define DEFAULT_AP_PASS "11111111"      //пароль для точки доступа "По умолчанию"
+#define ON 1
+#define OFF 0
 
 #define PIXEL_COUNT 30                  //количество пикселей в лентах
 
@@ -121,7 +123,7 @@ unsigned int prevTimeSaveConf = 0;        //Вспомогательная пе�
 
 unsigned int timeDebug = 1000;             //Вспомогательная переменная для отладки
 unsigned int prevTimeDebug = 0;           //Вспомогательная переменная для отладки
-unsigned int timeDebug2 = 10000;          //Вспомогательная переменная для отладки
+unsigned int timeDebug2 = 500;          //Вспомогательная переменная для отладки
 unsigned int prevTimeDebug2 = 0;          //Вспомогательная переменная для отладки
 
 //Создаем необходимые объекты
@@ -197,19 +199,27 @@ void setup() {
 
 
 void loop() {
-  wifi_update();
-  webSocket.loop();
-  server.handleClient();
-  MDNS.update();
+  wifi_update();            //12-36 мкс
+  webSocket.loop();         //40-60 мкс
+  server.handleClient();    //4-12  мкс
+  MDNS.update();            //25-45 мкс
 
 
-  //ПРИМЕНЕНИЕ изменений состояния флагов и параметров светильника
-  //Изменения значения переменной яркости освещения, если флаг яркости установлен и рука возле датчика
-  if (flagToBrightnessChange == 1) {
-    changeLedBridhtness();
-    flagDataUpdate = 1; 
+  //Изменение значения переменной яркости освещения, если флаг яркости установлен и рука возле датчика
+  if (flagToBrightnessChange == 1) { 
+    if (flagDirectionBrightnessChange == 1 && ledBridhtness < maxBridhtness)
+    {
+      ledBridhtness = ledBridhtness + 0.01;
+      flagDataUpdate = 1; 
+    }
+    else if (flagDirectionBrightnessChange == 0 && ledBridhtness > minBridhtness){
+      ledBridhtness = ledBridhtness - 0.01;
+      flagDataUpdate = 1; 
+    }
   }
+
   
+  //ПРИМЕНЕНИЕ изменений состояния флагов и параметров светильника
   //Включение ленты на цвет-white и яркость-ledBridhtness
   if (flagLedState == 1 && prevFlagLedState != flagLedState){
     onStrip(RgbColor::LinearBlend(black, white, ledBridhtness), nAnimeOn);
@@ -312,25 +322,9 @@ void loop() {
   //СОХРАНЕНИЕ настроек света в файл
   //Сохранение настроек в файл если установлен флаг и прошло время паузы
   if (flagNeedSaveConf == 1  && flagToBrightnessChange == 0 && millis()-prevTimeSaveConf > timeSaveConf){
-    saveFile(FILE_CONF);
+    //saveFile(FILE_CONF);
     flagNeedSaveConf = 0;
   }
-
-
-#ifdef DEBUG
-  if(millis() - prevTimeDebug > timeDebug)
-  { 
-  Serial.print((String) "proximity=" + proximity + ", ");
-  Serial.println((String) "ON=" + flagLedState + ", ");
-  //Serial.print((String) "B=" + ledBridhtness + ", ");
-  //Serial.print((String) "T=" + varForArrConstLedTemp + "\n");
-  
-  //Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
-  
-  //Serial.print((String) "CalculateBrightness=" + white.CalculateBrightness() + "\n");
-  prevTimeDebug = millis();
-  }
-#endif
 
 
 
@@ -352,18 +346,34 @@ void loop() {
     flagDataUpdate = 0;
   }
 
+
+
+#ifdef DEBUG
+  if(millis() - prevTimeDebug > timeDebug)
+  { 
+  //Serial.print((String) "proximity=" + proximity + ", ");
+  //Serial.println((String) "ON=" + flagLedState + ", ");
+  //Serial.print((String) "B=" + ledBridhtness + ", ");
+  //Serial.print((String) "T=" + varForArrConstLedTemp + "\n");
+  
+  //Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
+  
+  //Serial.print((String) "CalculateBrightness=" + white.CalculateBrightness() + "\n");
+  prevTimeDebug = millis();
+  }
+#endif
 }
 
 
 
 void onStrip(RgbColor color, int nAnime)
 {
-  unsigned int startTime = 0;
+  int timeStart = micros();
+
   switch (nAnime)
   {
   //простое включение (всех светодиодов одновременно)
-  case 0:
-    startTime = millis();                                   
+  case 0:                                 
     for (int n = 0; n < PIXEL_COUNT; n++)
     {
       strip1.SetPixelColor(n, color);
@@ -371,11 +381,10 @@ void onStrip(RgbColor color, int nAnime)
     }
     strip1.Show();    
     strip2.Show();
-    Serial.println(millis() - startTime);
     break;
+    
   //плавное зажигание (всех светодиодов одновременно)
-  case 1:
-  startTime = millis();             
+  case 1:           
     if (color.CalculateBrightness() != 0)
     {
       for (float n = 0.00; n <= ledBridhtness; n = n + 0.01)
@@ -392,11 +401,10 @@ void onStrip(RgbColor color, int nAnime)
         delay(20);
       }       
     }
-    Serial.println(millis() - startTime);
     break;
+    
   //последовательное включение от начала к концу лент (2 ленты одновременно) (начала лент в углу)
-  case 2:
-  startTime = millis();                                    
+  case 2:                                   
     for (int n = 0; n < PIXEL_COUNT; n++)
     {
       strip1.SetPixelColor(n, color);
@@ -405,11 +413,10 @@ void onStrip(RgbColor color, int nAnime)
       strip2.Show();
       delay(15);
     }
-    Serial.println(millis() - startTime);
     break; 
+    
   //последовательное включение от конца к началу лент (2 ленты одновременно) (начала лент в углу)
-  case 3:
-  startTime = millis();                                    
+  case 3:                                   
     for (int n = PIXEL_COUNT-1; n >= 0; n--)
     {
       strip1.SetPixelColor(n, color);
@@ -418,11 +425,10 @@ void onStrip(RgbColor color, int nAnime)
       strip2.Show();
       delay(15);
     }
-    Serial.println(millis() - startTime);
     break;
+    
   //последовательное включение от конца к началу ленты 1 дальше от начала к концу ленты 2 (2 ленты последовательно)
-  case 4:
-  startTime = millis();                                     
+  case 4:                                   
     for (int n = PIXEL_COUNT-1; n >= 0; n--)
     {
       strip1.SetPixelColor(n, color);
@@ -435,11 +441,10 @@ void onStrip(RgbColor color, int nAnime)
       strip2.Show();
       delay(10);
     }
-    Serial.println(millis() - startTime);
     break;
+    
   //последовательное включение от конца к началу ленты 2 дальше от начала к концу ленты 1 (2 ленты последовательно)
-  case 5:
-    startTime = millis();                                     
+  case 5:                                   
     for (int n = PIXEL_COUNT-1; n >= 0; n--)
     {
       strip2.SetPixelColor(n, color);
@@ -452,11 +457,10 @@ void onStrip(RgbColor color, int nAnime)
       strip1.Show();
       delay(10);
     }
-    Serial.println(millis() - startTime); 
     break;
+    
   //рандомное включение по одному светодиоду (2 ленты одновременно)
   case 6:
-    startTime = millis();
     int rndArr[60];
     for (int i = 0; i < 60; i++)  rndArr[i] = i;
     
@@ -482,22 +486,41 @@ void onStrip(RgbColor color, int nAnime)
       }
       delay(10);
     }  
-    Serial.println(millis() - startTime);
     break;
   }
+  
+  int deltaTime = micros() - timeStart;
+  Serial.print(F("onStrip time="));  Serial.println(deltaTime);
 }
 
 
-void offStrip(RgbColor color)
+void onOffStrips(int numberStrip, int act)
 {
-  for (int n = PIXEL_COUNT-1; n >= 0; n--)
+  int timeStart = micros();
+
+  switch (numberStrip)
   {
-    strip1.SetPixelColor(n, color);
-    strip1.Show();
-    strip2.SetPixelColor(n, color);
-    strip2.Show();
-    delay(15);
+    case 1:
+    {
+      for (int n = 0; n < PIXEL_COUNT; n++){
+        if (act == ON)   strip1.SetPixelColor(n, RgbColor::LinearBlend(black, white, ledBridhtness));
+        else             strip1.SetPixelColor(n, black);
+      }
+      strip1.Show();
+      break;
+    }
+    case 2:
+    {
+      for (int n = 0; n < PIXEL_COUNT; n++){
+        if (act == ON)   strip2.SetPixelColor(n, RgbColor::LinearBlend(black, white, ledBridhtness));
+        else             strip2.SetPixelColor(n, black);
+      }
+      strip2.Show();
+      break;
+    }
   }
+  int deltaTime = micros() - timeStart;
+  Serial.print(F("onOffStrips time="));  Serial.println(deltaTime);
 }
 
 
@@ -510,22 +533,4 @@ void updateStrip(RgbColor color)
   }
   strip1.Show();
   strip2.Show();
-}
-
-
-//Плавное изменение значения переменной яркости по кругу
-void changeLedBridhtness()
-{
-  if (ledBridhtness == minBridhtness)       flagDirectionBrightnessChange = 1;
-  else if (ledBridhtness == maxBridhtness)  flagDirectionBrightnessChange = 0;  
-  
-  if (flagDirectionBrightnessChange == 1)
-  {
-    ledBridhtness = ledBridhtness + 0.01;
-    if (ledBridhtness > maxBridhtness)      ledBridhtness = maxBridhtness;
-  }
-  else {
-    ledBridhtness = ledBridhtness - 0.01;
-    if (ledBridhtness < minBridhtness)      ledBridhtness = minBridhtness;
-  }
 }
