@@ -31,6 +31,9 @@ function startSendData(command) {
 		case "JSON":
 			sendFinishData(JSON.stringify(dataSend));
 			break;
+		case "onOff12":
+			sendFinishData('onOff12');
+			break;
 		case "onLED1":
 			sendFinishData('onLED1');
 			break;
@@ -42,12 +45,6 @@ function startSendData(command) {
 			break;
 		case "offLED2":
 			sendFinishData('offLED2');
-			break;
-		case "onLED12":
-			sendFinishData('onLED12');
-			break;
-		case "offLED12":
-			sendFinishData('offLED12');
 			break;
 		case "SAVE":
 			sendFinishData('SAVE');
@@ -94,6 +91,7 @@ function receivedDataProcessing(strJson){
 
 //Старт скрипта
 var deviceIp="192.168.1.235";
+//var deviceIp="";
 var flagWsState = 0;   //оостояние соединения с webSocket сервером
 
 //Определение IP-адреса контроллера с которого загружена страница

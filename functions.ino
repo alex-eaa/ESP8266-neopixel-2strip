@@ -1,3 +1,7 @@
+  //int timeStart = micros();
+  //int deltaTime = micros() - timeStart;
+  //Serial.print("sendToWsClient time=");  Serial.println(deltaTime);
+
 //Print configuration parameters
 void printConfiguration() 
 {

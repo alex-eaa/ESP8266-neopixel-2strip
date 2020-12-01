@@ -38,7 +38,7 @@
    - GPIO12 (D6) - кнопка запуска с настройками сети по умолчанию;
 */
 
-#define DEBUG 1
+#define DEBUG
 
 #include <NeoPixelBus.h>
 #include <Wire.h>
@@ -85,7 +85,8 @@ extern char *p_passwordAP;
 
 bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
-unsigned int speedT = 200;   //минимальный период отправки данных, миллисек
+unsigned int speedT = 150;   //минимальный период отправки данных, миллисек
+unsigned int timeT1 = 0;     //вспом. переменная для speedT
 bool flagDataUpdate = 0;     //флаг обновленых данных (если 1 значит нужно отправить данные WS клиенту)
 
 //Сохраняемые переменные (настройки параметров светильника)
@@ -93,15 +94,15 @@ float ledBridhtness = 0.3f;               //яркость led
 float minBridhtness = 0.1f;               //минимальная яркость (0-255)
 float maxBridhtness = 0.9f;               //максимальная яркость (0-255)
 int varForArrConstLedTemp = 0;            //предустановленный цвет, индекс элемента массива arrConstLedTemp
-int nAnimeOn = 6;                         //номер анимации включения
-int nAnimeOff = 6;                        //номер анимации отключения
+int nAnimeOn = 0;                         //номер анимации включения
+int nAnimeOff = 0;                        //номер анимации отключения
 int arrConstLedTemp[3][3] = { {000,255,255},
                               {255,000,204},
                               {200,204,000} };     //предустановленные значения температуры света
 
 
 int proximity = 0;                        //расстояние от датчика до объекта (0-1024)
-bool flagLedState = 0;                    //флаг состояния освещения, вкл./откл.
+bool flagLedState = 0;                    //флаг состояния освещения светильника, вкл./откл.
 bool flagToOnOff = 0;                     //флаг перехода в режим изменения состояния освещения на противоположное
 bool flagToBrightnessChange = 0;          //флаг перехода в режим настройки яркости
 bool flagToTempChange = 0;                //флаг перехода в режим настройки температуры света
@@ -110,7 +111,7 @@ bool flagNeedSaveConf = 0;                //флаг необходимости 
 
 unsigned int timeToOnOff = 60;            //Время задержки для жеста включения-отключения света, мс
 unsigned int timeToBrightness = 1000;     //Время задержки для жеста перехода в режим регулировки яркости, мс
-unsigned int timeToTemp = 1000;           //Время до повторного включения, для изменения температуры света, мс
+unsigned int timeToTemp = 2000;           //Время до повторного включения, для изменения температуры света, мс
 unsigned int timeSaveConf = 5000;         //Время до сохранения настроек после изменения яркости или температуры света
 
 bool prevFlagLedState;                    //Вспомогательная переменная
@@ -158,18 +159,19 @@ void setup() {
   printFile(FILE_CONF);
 #endif
 
-  loadFile(FILE_CONF);
+  bool loadFileFILE_CONF = loadFile(FILE_CONF);
 
 
   //Запуск точки доступа с параметрами поумолчанию если файл настроек сети отсутствует или зажата кнопка
-  if ( !loadFile(FILE_NETWORK) ||  digitalRead(GPIO_BUTTON) == 0)    startAp(DEFAULT_AP_NAME, DEFAULT_AP_PASS);
+  if ( !loadFile(FILE_NETWORK) ||  digitalRead(GPIO_BUTTON) == 0)   startAp(DEFAULT_AP_NAME, DEFAULT_AP_PASS);
   //Запуск точки доступа
-  else if (digitalRead(GPIO_BUTTON) == 1 && wifiAP_mode == 1)    startAp(p_ssidAP, p_passwordAP);
+  else if (digitalRead(GPIO_BUTTON) == 1 && wifiAP_mode == 1)       startAp(p_ssidAP, p_passwordAP);
   //Запуск подключения клиента к точке доступа
   else if (digitalRead(GPIO_BUTTON) == 1 && wifiAP_mode == 0) {
     if (WiFi.getPersistent() == true)    WiFi.persistent(false);
     WiFi.softAPdisconnect(true);
     WiFi.persistent(true);
+    //Если пароль или имя точки доступа изменился, подключаемся с новыми
     if (WiFi.SSID() != p_ssid || WiFi.psk() != p_password) {
       Serial.println(F("\nCHANGE password or ssid"));
       WiFi.disconnect();
@@ -223,11 +225,13 @@ void loop() {
   //Включение ленты на цвет-white и яркость-ledBridhtness
   if (flagLedState == 1 && prevFlagLedState != flagLedState){
     onStrip(RgbColor::LinearBlend(black, white, ledBridhtness), nAnimeOn);
+    flagDataUpdate = 1;
     prevFlagLedState = flagLedState;
   }
   //Отключение ленты
   else if (flagLedState == 0 && prevFlagLedState != flagLedState){
     onStrip(black, nAnimeOff);
+    flagDataUpdate = 1;
     prevFlagLedState = flagLedState;
   }
   
@@ -261,7 +265,7 @@ void loop() {
 
   //Изменение яркости освещения, если задана новая величина яркости ledBridhtness
   if (prevLedBridhtness != ledBridhtness){
-    if (flagLedState == 1) updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
+    if (flagLedState == 1)  updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));
     prevLedBridhtness = ledBridhtness;
   }    
   
@@ -298,7 +302,7 @@ void loop() {
     //при отключении также взводим флаг разрешения изменения температуры света
     if (flagToOnOff == 1 && flagToBrightnessChange == 0){
       flagLedState = !flagLedState;
-      flagDataUpdate = 1;
+      //flagDataUpdate = 1;
       //Dзводим флаг разрешения изменения температуры света
       if (flagLedState == 0){
         flagToTempChange = 1;
@@ -333,15 +337,19 @@ void loop() {
   {
     if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] )
     {
-      String data = serializationToJson_index();
-      int startT_broadcastTXT = micros();
+      if ( millis() - timeT1 > speedT )
+      {
+        String data = serializationToJson_index();
+        int startT_broadcastTXT = micros();
 #ifdef DEBUG
-      Serial.print("\nwebSocket.broadcastTXT: ");
-      Serial.println(data);
+        Serial.print("\nwebSocket.broadcastTXT: ");
+        Serial.println(data);
 #endif
-      webSocket.broadcastTXT(data);
-      int T_broadcastTXT = micros() - startT_broadcastTXT;
-      if (T_broadcastTXT > TIMEOUT_T_broadcastTXT)  checkPing();
+        webSocket.broadcastTXT(data);
+        int T_broadcastTXT = micros() - startT_broadcastTXT;
+        if (T_broadcastTXT > TIMEOUT_T_broadcastTXT)  checkPing();
+        timeT1 = millis();
+      }
     }
     flagDataUpdate = 0;
   }
@@ -352,8 +360,8 @@ void loop() {
   if(millis() - prevTimeDebug > timeDebug)
   { 
   //Serial.print((String) "proximity=" + proximity + ", ");
-  //Serial.println((String) "ON=" + flagLedState + ", ");
-  //Serial.print((String) "B=" + ledBridhtness + ", ");
+  Serial.print((String) "ON=" + flagLedState + ", ");
+  Serial.println((String) "B=" + ledBridhtness + ", ");
   //Serial.print((String) "T=" + varForArrConstLedTemp + "\n");
   
   //Serial.print(F("<-> FREE MEMORY: "));          Serial.println(ESP.getFreeHeap());
@@ -368,8 +376,6 @@ void loop() {
 
 void onStrip(RgbColor color, int nAnime)
 {
-  int timeStart = micros();
-
   switch (nAnime)
   {
   //простое включение (всех светодиодов одновременно)
@@ -383,25 +389,27 @@ void onStrip(RgbColor color, int nAnime)
     strip2.Show();
     break;
     
-  //плавное зажигание (всех светодиодов одновременно)
-  case 1:           
+  //плавное включение (всех светодиодов одновременно)
+  case 1:      
     if (color.CalculateBrightness() != 0)
     {
-      for (float n = 0.00; n <= ledBridhtness; n = n + 0.01)
+      for (float n = 0.00; n < ledBridhtness; n = n + 0.01)
       {
         updateStrip(RgbColor::LinearBlend(black, white, n));
-        delay(20);
-      }      
+        delay(10);
+      }
+      updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));      
     }
     else
     {
-      for (float n = ledBridhtness; n >= 0.00; n = n - 0.01)
+      for (float n = ledBridhtness; n > 0.00; n = n - 0.01)
       {
         updateStrip(RgbColor::LinearBlend(black, white, n));
-        delay(20);
-      }       
+        delay(10);
+      }
+      updateStrip(RgbColor::LinearBlend(black, white, 0));       
     }
-    break;
+  break;
     
   //последовательное включение от начала к концу лент (2 ленты одновременно) (начала лент в углу)
   case 2:                                   
@@ -413,7 +421,7 @@ void onStrip(RgbColor color, int nAnime)
       strip2.Show();
       delay(15);
     }
-    break; 
+  break; 
     
   //последовательное включение от конца к началу лент (2 ленты одновременно) (начала лент в углу)
   case 3:                                   
@@ -488,16 +496,11 @@ void onStrip(RgbColor color, int nAnime)
     }  
     break;
   }
-  
-  int deltaTime = micros() - timeStart;
-  Serial.print(F("onStrip time="));  Serial.println(deltaTime);
 }
 
 
 void onOffStrips(int numberStrip, int act)
 {
-  int timeStart = micros();
-
   switch (numberStrip)
   {
     case 1:
@@ -519,8 +522,6 @@ void onOffStrips(int numberStrip, int act)
       break;
     }
   }
-  int deltaTime = micros() - timeStart;
-  Serial.print(F("onOffStrips time="));  Serial.println(deltaTime);
 }
 
 

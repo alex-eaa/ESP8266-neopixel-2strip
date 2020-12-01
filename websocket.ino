@@ -9,7 +9,6 @@ void webSocket_init()
 //функция обработки входящих на сервер WebSocket сообщений
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
 {
-  int timeStart = micros();
   switch (type) {
     case WStype_DISCONNECTED:
       sendSpeedDataEnable[num] = 0;
@@ -38,13 +37,10 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     case WStype_TEXT:
       {
 #ifdef DEBUG
-        //Serial.printf("\n[%u] get from WS: %s\n", num, payload);
+        Serial.printf("\n[%u] get from WS: %s\n", num, payload);
 #endif
-        if (strcmp((char *)payload, "onLED12") == 0) {
-          flagLedState = 1;
-        }
-        else if (strcmp((char *)payload, "offLED12") == 0) {
-          flagLedState = 0;
+        if (strcmp((char *)payload, "onOff12") == 0) {
+          flagLedState = !flagLedState;
         }
         else if (strcmp((char *)payload, "onLED1") == 0) {
           onOffStrips(1, ON);
@@ -78,25 +74,17 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       // webSocket.sendBIN(num, payload, length);
       break;
   }
-
-  int deltaTime = micros() - timeStart;
-  Serial.print(F("webSocketEvent time="));  Serial.println(deltaTime);
 }
 
 
 void sendToWsClient(int num, String json) {
-  int timeStart = micros();
 #ifdef DEBUG
-  //Serial.printf("\n[%u] ", num);
-  //Serial.print("sent to WS_Client: ");
-  //Serial.println(json);
+  Serial.printf("\n[%u] ", num);
+  Serial.print("sent to WS_Client: ");
+  Serial.println(json);
 #endif
   webSocket.sendTXT(num, json);
-  int deltaTime = micros() - timeStart;
-  Serial.print(F("sendToWsClient time="));  Serial.println(deltaTime);
 }
-
-
 
 
 // Проверка состояния соединения с websocket-клиентами. Отключение тех с которыми нет связи.
