@@ -66,11 +66,11 @@
 #define TIMEOUT_T_broadcastTXT 100000   //таймаут отправки скоростных сообщений T_broadcastTXT, мкс
 
 #define DEFAULT_AP_NAME "ESP"           //имя точки доступа "По умолчанию"
-#define DEFAULT_AP_PASS "11111111"      //пароль для точки доступа "По умолчанию"
+#define DEFAULT_AP_PASS "12345678"      //пароль для точки доступа "По умолчанию"
 #define ON 1
 #define OFF 0
 
-#define PIXEL_COUNT 30                  //количество пикселей в лентах
+#define PIXEL_COUNT 74                  //количество пикселей в лентах
 
 //Сохраняемые переменные (настройки сети)
 extern bool wifiAP_mode;                   //флаг работы WIFI модуля в режиме точки доступа, (1-работает в режиме AP)
@@ -396,7 +396,7 @@ void onStrip(RgbColor color, int nAnime)
       for (float n = 0.00; n < ledBridhtness; n = n + 0.01)
       {
         updateStrip(RgbColor::LinearBlend(black, white, n));
-        delay(10);
+        delay(30);
       }
       updateStrip(RgbColor::LinearBlend(black, white, ledBridhtness));      
     }
@@ -405,7 +405,7 @@ void onStrip(RgbColor color, int nAnime)
       for (float n = ledBridhtness; n > 0.00; n = n - 0.01)
       {
         updateStrip(RgbColor::LinearBlend(black, white, n));
-        delay(10);
+        delay(30);
       }
       updateStrip(RgbColor::LinearBlend(black, white, 0));       
     }
@@ -469,12 +469,12 @@ void onStrip(RgbColor color, int nAnime)
     
   //рандомное включение по одному светодиоду (2 ленты одновременно)
   case 6:
-    int rndArr[60];
-    for (int i = 0; i < 60; i++)  rndArr[i] = i;
+    int rndArr[148];
+    for (int i = 0; i < 148; i++)  rndArr[i] = i;
     
-    for (int i = 0; i < 60; i++)
+    for (int i = 0; i < 148; i++)
     {
-      int j = random(0, 59);
+      int j = random(0, 147);
       int temp = rndArr[j];
       rndArr[j] = rndArr[i];
       rndArr[i] = temp;
@@ -482,14 +482,14 @@ void onStrip(RgbColor color, int nAnime)
 
     for (int n = 0; n < 2*PIXEL_COUNT; n++)
     {
-      if (rndArr[n] < 30)
+      if (rndArr[n] < 74)
       {
       strip1.SetPixelColor(rndArr[n], color);
       strip1.Show();        
       }
       else
       {
-      strip2.SetPixelColor(rndArr[n]-30, color);
+      strip2.SetPixelColor(rndArr[n]-74, color);
       strip2.Show();         
       }
       delay(10);
